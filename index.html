@@ -14,7 +14,6 @@
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; }
         
-        /* 1. 모바일 높이 95px 고정 및 좌우 여백 4px(px-1) 설정 */
         .day-cell { 
             min-height: 130px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; 
             padding: 4px 8px 8px 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; 
@@ -26,7 +25,14 @@
         
         .sugar-input { width: 80px; padding: 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 700; font-size: 15px; outline: none; background-color: #ffffff !important; height: 38px !important; }
         .sugar-input:focus { border-color: #0ea5e9; }
-        .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.5; font-size: 15px; outline: none; background-color: #fff; resize: none; }
+        
+        /* 2. 입력창 하단 여백 보정 (pb-4 추가) */
+        .memo-area { 
+            width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; 
+            padding: 10px 10px 16px 10px; line-height: 1.5; font-size: 15px; 
+            outline: none; background-color: #fff; resize: none; 
+        }
+
         .tab-active { color: #0ea5e9; font-weight: 800; position: relative; }
         .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
         .tab-inactive { color: #94a3b8; }
@@ -73,7 +79,7 @@
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0" spellcheck="false"></div>
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
                                 <textarea id="m_memo" class="memo-area h-[40px] pt-2 pb-[6px] px-[10px]" placeholder="아침 메모" spellcheck="false"></textarea>
                             </div>
                             <div class="bg-orange-50/40 px-3 py-2 rounded-2xl border border-orange-100 flex flex-col gap-2.5">
@@ -195,7 +201,6 @@
                 const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 let dayColorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
                 
-                // 2. 모바일 날짜 원형 테두리 18px로 축소 (w-4.5 h-4.5) 및 양끝 정렬
                 let headerContent = `<div class="flex items-center justify-between w-full">`;
                 const circleSize = isMobile ? 'w-[18px] h-[18px]' : 'w-6 h-6';
                 const successCircle = (r && r.toilet) ? `bg-sky-100 text-sky-600 rounded-full ${circleSize} flex items-center justify-center` : `${circleSize} flex items-center justify-center`;
@@ -206,15 +211,16 @@
                 let cellContent = headerContent;
                 if (r) {
                     const chk = (v, t) => parseInt(v) <= t ? 'text-sky-500' : 'text-rose-500';
-                    // 3. 모바일 균등 분산 배치 (justify-between) 및 여백 제거
-                    cellContent += `<div class="text-[9px] md:text-[11px] font-bold flex flex-col flex-grow ${isMobile ? 'justify-between' : 'gap-0'} mt-1">`;
-                    if (r.m_val) cellContent += `<div>🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span></div>`;
-                    if (r.l_val) cellContent += `<div>☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span></div>`;
-                    if (r.d_val) cellContent += `<div>🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span></div>`;
-                    if (r.weight) cellContent += `<div class="border-t pt-0.5 text-slate-500 font-bold">⚖️ ${r.weight}${isMobile ? "" : "kg"}</div>`;
+                    // 1. 모바일 항목 위치 고정 (gap-[4px] 사용 및 고정 높이 슬롯 확보)
+                    cellContent += `<div class="text-[9px] md:text-[11px] font-bold flex flex-col flex-grow ${isMobile ? 'gap-[4px]' : 'gap-0'} mt-1">`;
+                    cellContent += `<div class="h-[14px] overflow-hidden">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span>` : ''}</div>`;
+                    cellContent += `<div class="h-[14px] overflow-hidden">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span>` : ''}</div>`;
+                    cellContent += `<div class="h-[14px] overflow-hidden">${r.d_val ? `🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span>` : ''}</div>`;
+                    // 체중은 항상 맨 아래 위치하도록 mt-auto 사용
+                    cellContent += `<div class="mt-auto border-t pt-0.5 text-slate-500 font-bold h-[16px] overflow-hidden">${r.weight ? `⚖️ ${r.weight}${isMobile ? "" : "kg"}` : ''}</div>`;
                     cellContent += '</div>';
                 } else {
-                    cellContent += `<div class="flex-grow"></div>`; // 빈 칸 높이 유지용
+                    cellContent += `<div class="flex-grow"></div>`; 
                 }
                 
                 cell.innerHTML = cellContent;

@@ -59,7 +59,7 @@
             width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px;
             padding: 10px; line-height: 1.5; font-size: 15px;
             outline: none; background-color: #fff;
-            resize: none;
+            resize: none; /* 드래그 크기 조절 금지 */
         }
 
         .tab-active { 
@@ -109,14 +109,19 @@
 <body>
 
     <div id="app-container" class="main-wrapper">
-        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm">
+        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm transition-all duration-300">
             <div class="relative flex items-center justify-center p-4 max-w-4xl mx-auto w-full">
-                <div class="flex items-center gap-8">
+                <div class="flex items-center gap-6">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-50 rounded-full text-slate-400 font-bold transition">〈</button>
-                    <h1 id="view-title" class="font-bold text-lg md:text-xl text-slate-800 min-w-[160px] text-center">연도 월</h1>
+                    <div class="flex items-center gap-2">
+                        <h1 id="view-title" class="font-bold text-lg md:text-xl text-slate-800 min-w-[140px] text-center">연도 월</h1>
+                        <button onclick="switchView('settings')" class="text-slate-400 hover:text-slate-600 transition-colors p-2" title="설정">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
                     <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-50 rounded-full text-slate-400 font-bold transition">〉</button>
                 </div>
-                <div id="sync-status" class="absolute right-6 hidden"><div class="loader"></div></div>
+                <div id="sync-status" class="absolute right-14 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
             </div>
         </header>
 
@@ -133,52 +138,55 @@
 
             <!-- 입력 섹션 -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
-                <div class="bg-white rounded-3xl border border-slate-200 p-5 md:p-8 shadow-xl">
-                    <div class="flex justify-between items-center mb-8 border-b pb-4">
-                        <h2 id="input-date-title" class="font-bold text-slate-800 text-xl">기록하기</h2>
-                        <div class="flex items-center gap-3">
-                            <button onclick="handleSave()" id="save-btn" class="bg-sky-500 hover:bg-sky-600 text-white px-8 py-2.5 rounded-2xl font-bold shadow-lg transition active:scale-95 disabled:opacity-50">저장</button>
-                            <button onclick="switchView('calendar')" class="text-slate-300 hover:text-slate-500 text-3xl px-2 font-light">✕</button>
+                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-6 border-b pb-3">
+                        <h2 id="input-date-title" class="font-bold text-slate-800 text-xl tracking-tight"></h2>
+                        <div class="flex items-center gap-2">
+                            <button onclick="handleSave()" id="save-btn" class="bg-sky-500 hover:bg-sky-600 text-white px-6 py-2 rounded-2xl font-bold shadow-md transition active:scale-95 disabled:opacity-50 text-sm">저장</button>
+                            <button onclick="switchView('calendar')" class="text-slate-300 hover:text-slate-500 text-3xl px-1 font-light">✕</button>
                         </div>
                     </div>
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-blue-50/40 p-5 rounded-3xl border border-blue-100">
-                                <div class="flex items-center justify-between mb-4">
-                                    <span class="font-bold text-blue-800">🌥️ 아침 공복</span>
-                                    <input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-blue-50/40 p-3 rounded-2xl border border-blue-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <!-- 글씨 색상 수정: text-blue-800 -> text-slate-700 -->
+                                    <span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span>
+                                    <input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0" spellcheck="false">
                                 </div>
-                                <textarea id="m_memo" class="memo-area h-24" placeholder="아침 메모"></textarea>
+                                <!-- 아침 메모 높이 40px, 하단 여백 2px 축소 (pb-[6px]), spellcheck 비활성화 -->
+                                <textarea id="m_memo" class="memo-area h-[40px] pt-2 pb-[6px] px-[10px]" placeholder="아침 메모" spellcheck="false"></textarea>
                             </div>
-                            <div class="bg-orange-50/40 p-5 rounded-3xl border border-orange-100 flex flex-col justify-center">
+                            <div class="bg-orange-50/40 p-3 rounded-2xl border border-orange-100 flex flex-col justify-center">
                                 <div class="flex items-center justify-between">
-                                    <span class="font-bold text-orange-800">⚖️ 체중 기록</span>
-                                    <input type="number" step="0.1" id="weight_val" class="sugar-input" placeholder="00.0">
+                                    <span class="font-bold text-orange-800 text-sm">⚖️ 체중 기록</span>
+                                    <input type="number" step="0.1" id="weight_val" class="sugar-input" placeholder="00.0" spellcheck="false">
                                 </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-slate-50/50 p-5 rounded-3xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-4">
-                                    <span class="font-bold text-slate-700">☀️ 점심 혈당</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50/50 p-3 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-bold text-slate-700 text-sm">☀️ 점심 혈당</span>
                                     <div class="flex gap-2">
-                                        <input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)">
+                                        <input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" spellcheck="false">
                                         <button onclick="fetchMealData()" class="bg-white p-2 rounded-xl border border-slate-200 text-sky-500">🍴</button>
                                     </div>
                                 </div>
-                                <textarea id="l_memo" class="memo-area h-40" placeholder="점심 식단"></textarea>
+                                <textarea id="l_memo" class="memo-area h-32" placeholder="점심 식단" spellcheck="false"></textarea>
                             </div>
-                            <div class="bg-slate-50/50 p-5 rounded-3xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-4">
-                                    <span class="font-bold text-slate-700">🌙 저녁 혈당</span>
-                                    <input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)">
+                            <div class="bg-slate-50/50 p-3 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-bold text-slate-700 text-sm">🌙 저녁 혈당</span>
+                                    <input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" spellcheck="false">
                                 </div>
-                                <textarea id="d_memo" class="memo-area h-40" placeholder="저녁 식단"></textarea>
+                                <textarea id="d_memo" class="memo-area h-32" placeholder="저녁 식단" spellcheck="false"></textarea>
                             </div>
                         </div>
-                        <div class="bg-slate-50/50 p-5 rounded-3xl border border-slate-200">
-                            <label class="block text-sm font-bold text-slate-700 mb-3">📝 기타 메모</label>
-                            <textarea id="memo_val" class="memo-area h-20" placeholder="기타 특이사항을 적어주세요."></textarea>
+                        <div class="bg-slate-50/50 p-3 rounded-2xl border border-slate-200">
+                            <label class="block text-xs font-bold text-slate-500 mb-2">📝 기타 메모</label>
+                            <!-- 기타 메모 높이 60px, spellcheck 비활성화 -->
+                            <textarea id="memo_val" class="memo-area h-[60px] py-2" placeholder="기타 특이사항" spellcheck="false"></textarea>
                         </div>
                     </div>
                 </div>
@@ -201,7 +209,7 @@
                 <div class="bg-white rounded-[2.5rem] border border-slate-200 p-6 md:p-10 shadow-sm">
                     <h2 class="text-2xl font-black text-slate-800 mb-6">🧠 AI 스마트 분석</h2>
                     <div class="bg-slate-50 rounded-3xl p-5 mb-8 border border-slate-200 text-left">
-                        <textarea id="ai-question-input" class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:border-sky-400 outline-none mb-4 shadow-sm" rows="3" placeholder="기록된 데이터를 바탕으로 질문하세요."></textarea>
+                        <textarea id="ai-question-input" class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:border-sky-400 outline-none mb-4 shadow-sm" rows="3" placeholder="기록된 데이터를 바탕으로 질문하세요." spellcheck="false"></textarea>
                         <div class="flex gap-3">
                             <button onclick="runAIAnalysis('general')" id="analysis-btn" class="flex-1 bg-sky-500 text-white py-4 rounded-2xl font-bold shadow-lg transition active:scale-95 disabled:bg-slate-300">📊 전체 리포트</button>
                             <button onclick="runAIAnalysis('question')" id="ask-btn" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-bold transition active:scale-95 disabled:bg-slate-300 shadow-md">💬 질문하기</button>
@@ -211,6 +219,24 @@
                     <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner">
                         <div id="analysis-result-content" class="whitespace-pre-wrap"></div>
                     </div>
+                </div>
+            </section>
+
+            <!-- 학교 설정 섹션 -->
+            <section id="view-settings" class="view-section hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">⚙️ 학교 설정</h2>
+                        <button onclick="switchView('calendar')" class="text-slate-300 text-2xl px-2">✕</button>
+                    </div>
+                    <div id="current-school-info" class="p-5 bg-sky-50 text-sky-700 rounded-2xl font-bold mb-6 italic text-center">
+                        <span id="school-name-display">학교 미설정</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="school-search-input" class="flex-grow border border-slate-200 rounded-2xl px-5 py-3.5 bg-slate-50 shadow-inner outline-none focus:border-sky-300" placeholder="학교명 입력 (예: 서울고)" spellcheck="false">
+                        <button onclick="searchSchool()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold shadow-md active:scale-95 transition">검색</button>
+                    </div>
+                    <div id="school-search-results" class="max-h-64 overflow-y-auto mt-6 space-y-2 rounded-xl"></div>
                 </div>
             </section>
         </main>
@@ -230,13 +256,19 @@
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec";
-        let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar';
+        let currentMonth = new Date(), records = {}, schoolInfo = null, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar';
 
-        window.onload = async () => { loadLocalData(); renderCalendar(); await syncWithCloud(); };
+        window.onload = async () => { 
+            loadLocalData(); 
+            renderCalendar(); 
+            displayCurrentSchool();
+            await syncWithCloud(); 
+        };
 
         function loadLocalData() {
             try {
                 records = JSON.parse(localStorage.getItem('health_records_v6')) || {};
+                schoolInfo = JSON.parse(localStorage.getItem('health_school_v6'));
             } catch(e) { records = {}; }
         }
 
@@ -247,6 +279,7 @@
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 if (data.records) { records = data.records; localStorage.setItem('health_records_v6', JSON.stringify(records)); renderCalendar(); }
+                if (data.schoolInfo) { schoolInfo = data.schoolInfo; localStorage.setItem('health_school_v6', JSON.stringify(schoolInfo)); displayCurrentSchool(); }
             } catch (e) { console.error(e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
         }
 
@@ -303,10 +336,13 @@
                 cell.onclick = () => { 
                     selectedDateStr = dateKey; 
                     const rec = records[dateKey]||{}; 
-                    document.getElementById('input-date-title').innerText = dateKey; 
+                    const days = ['일', '월', '화', '수', '목', '금', '토'];
+                    const dObj = new Date(dateKey.replace(/-/g, '/'));
+                    const dayName = days[dObj.getDay()];
+                    document.getElementById('input-date-title').innerText = `${dateKey}(${dayName})`; 
                     ['m_val','m_memo','l_val','l_memo','d_val','d_memo','weight_val','memo_val'].forEach(id => {
                         const el = document.getElementById(id);
-                        if (el) el.value = rec[id.replace('_val','_val')] || '';
+                        if (el) el.value = rec[id === 'memo_val' ? 'memo' : (id === 'weight_val' ? 'weight' : id)] || '';
                     });
                     switchView('input'); 
                 };
@@ -317,11 +353,15 @@
         function switchView(n) {
             document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden'));
             document.getElementById(`view-${n}`).classList.remove('hidden');
+            const header = document.getElementById('main-header');
+            if (n === 'input') header.style.display = 'none';
+            else header.style.display = 'block';
             document.querySelectorAll('#bottom-nav button').forEach(b => {
                 if (b.id === `nav-${n}`) { b.classList.add('tab-active'); b.classList.remove('tab-inactive'); }
                 else { b.classList.remove('tab-active'); b.classList.add('tab-inactive'); }
             });
             if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50);
+            window.scrollTo(0,0);
         }
 
         function validateInputColor(el, t) { if (!el) return; const val = parseInt(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
@@ -329,58 +369,61 @@
         function showMessageBox(t) { document.getElementById('message-text').innerText = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
         
+        async function searchSchool() {
+            const q = document.getElementById('school-search-input').value; if(!q) return;
+            const resultsDiv = document.getElementById('school-search-results');
+            resultsDiv.innerHTML = '<div class="text-center py-4 text-slate-400 animate-pulse">학교 검색 중...</div>';
+            try {
+                const res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                if(data.schoolInfo) {
+                    resultsDiv.innerHTML = data.schoolInfo[1].row.map(s => `<div onclick="selectSchool('${s.ATPT_OFCDC_SC_CODE}','${s.SD_SCHUL_CODE}','${s.SCHUL_NM}')" class="p-4 border border-slate-100 bg-white hover:bg-sky-50 cursor-pointer text-sm font-bold transition rounded-2xl shadow-sm">${s.SCHUL_NM} <span class="text-[10px] text-slate-400 font-normal ml-2">${s.ORG_RDNMA}</span></div>`).join('');
+                } else resultsDiv.innerHTML = '<div class="text-center py-4 text-slate-400 italic">검색 결과가 없습니다.</div>';
+            } catch(e) { showMessageBox("학교 검색 실패: " + e.message); }
+        }
+
+        async function selectSchool(atpt, schul, name) {
+            schoolInfo = { ATPT_OFCDC_SC_CODE: atpt, SD_SCHUL_CODE: schul, SCHUL_NM: name };
+            localStorage.setItem('health_school_v6', JSON.stringify(schoolInfo));
+            displayCurrentSchool();
+            document.getElementById('school-search-results').innerHTML = '';
+            try { await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "settings", schoolInfo }) }); } catch(e) {}
+            showMessageBox(`${name}이(가) 성공적으로 설정되었습니다.`);
+        }
+
+        function displayCurrentSchool() { document.getElementById('school-name-display').innerText = schoolInfo ? `✅ 현재 설정: ${schoolInfo.SCHUL_NM}` : "❌ 학교 미설정"; }
+
+        async function fetchMealData() {
+            if(!schoolInfo || !selectedDateStr) { showMessageBox("학교를 먼저 설정해주세요."); switchView('settings'); return; }
+            try {
+                const res = await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${schoolInfo.ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${schoolInfo.SD_SCHUL_CODE}&MLSV_YMD=${selectedDateStr.replace(/-/g,'')}`);
+                const data = await res.json();
+                if(data.mealServiceDietInfo) {
+                    const row = data.mealServiceDietInfo[1].row.find(r => r.MMEAL_SC_NM.includes('중식'));
+                    if(row) document.getElementById('l_memo').value = row.DDISH_NM.replace(/<br\/>/g, '\n').replace(/\([^)]*\)/g, '').replace(/[\*\.]/g, '').trim();
+                    else showMessageBox("해당 날짜의 급식 정보가 없습니다.");
+                } else showMessageBox("정보를 찾을 수 없습니다.");
+            } catch(e) { showMessageBox("급식 정보 조회 실패"); }
+        }
+
         function updateChart() {
             const canvas = document.getElementById('mainChart'); if(!canvas) return;
             const ctx = canvas.getContext('2d'); const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
             const last = new Date(yr, mo+1, 0).getDate(); const labels = Array.from({length:last}, (_,i)=>i+1);
-            
-            const getVal = (day, key) => {
-                const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const val = records[dateKey]?.[key];
-                return (val && val !== "") ? parseFloat(val) : null;
-            };
-
+            const getVal = (day, key) => { const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; const val = records[dateKey]?.[key]; return (val && val !== "") ? parseFloat(val) : null; };
             let datasets = [];
-            let options = { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        align: 'end',
-                        labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } }
-                    }
-                },
-                scales: { 
-                    y: {
-                        grid: {
-                            // 눈금 값이 100 또는 180인 경우 두께를 2px로 조정 (너무 진하지 않게)
-                            lineWidth: (context) => (context.tick.value === 100 || context.tick.value === 180) ? 2 : 1,
-                            color: (context) => (context.tick.value === 100 || context.tick.value === 180) ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.05)'
-                        }
-                    } 
-                },
-                spanGaps: true
-            };
-
+            let options = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } } }, scales: { y: { grid: { lineWidth: (context) => (context.tick.value === 100 || context.tick.value === 180) ? 2 : 1, color: (context) => (context.tick.value === 100 || context.tick.value === 180) ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.05)' } } }, spanGaps: true };
             if (currentChartType === 'sugar') {
-                datasets = [
-                    { label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.3, fill: false }, 
-                    { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.3, fill: false }, 
-                    { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.3, fill: false }  
-                ];
-                options.scales.y.min = 70; 
-                options.scales.y.max = 250; 
-                options.scales.y.ticks = { stepSize: 10 };
+                datasets = [{ label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.3, fill: false }, { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.3, fill: false }, { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.3, fill: false }];
+                options.scales.y.min = 70; options.scales.y.max = 250; options.scales.y.ticks = { stepSize: 10 };
             } else {
                 datasets = [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'weight')), borderColor: '#0ea5e9', fill: false, tension: 0.3 }];
-                options.scales.y.min = 45; 
-                options.scales.y.max = 65;
+                options.scales.y.min = 45; options.scales.y.max = 65;
             }
-
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: options });
         }
+
         function setChartType(t) { 
             currentChartType = t; 
             const btns = document.querySelectorAll('button[onclick*="ChartType"]');

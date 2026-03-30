@@ -19,17 +19,17 @@
             padding: 4px 8px 8px 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; 
         }
         @media (max-width: 640px) { 
-            .day-cell { min-height: 95px; max-height: 95px; padding: 4px 4px 4px 4px; } 
+            .day-cell { min-height: 95px; max-height: 95px; padding: 3px 4px 3px 4px; } 
         }
         .day-cell:hover { background-color: #f1f5f9; }
         
         .sugar-input { width: 80px; padding: 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 700; font-size: 15px; outline: none; background-color: #ffffff !important; height: 38px !important; }
         .sugar-input:focus { border-color: #0ea5e9; }
         
-        /* 2. 입력창 하단 여백 보정 (pb-4 추가) */
+        /* 행간을 1.6으로 늘리고 하단 여백(pb-5)을 더 확보하여 잘림 방지 */
         .memo-area { 
             width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; 
-            padding: 10px 10px 16px 10px; line-height: 1.5; font-size: 15px; 
+            padding: 10px 10px 20px 10px; line-height: 1.6; font-size: 15px; 
             outline: none; background-color: #fff; resize: none; 
         }
 
@@ -211,13 +211,13 @@
                 let cellContent = headerContent;
                 if (r) {
                     const chk = (v, t) => parseInt(v) <= t ? 'text-sky-500' : 'text-rose-500';
-                    // 1. 모바일 항목 위치 고정 (gap-[4px] 사용 및 고정 높이 슬롯 확보)
-                    cellContent += `<div class="text-[9px] md:text-[11px] font-bold flex flex-col flex-grow ${isMobile ? 'gap-[4px]' : 'gap-0'} mt-1">`;
-                    cellContent += `<div class="h-[14px] overflow-hidden">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span>` : ''}</div>`;
-                    cellContent += `<div class="h-[14px] overflow-hidden">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span>` : ''}</div>`;
-                    cellContent += `<div class="h-[14px] overflow-hidden">${r.d_val ? `🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span>` : ''}</div>`;
-                    // 체중은 항상 맨 아래 위치하도록 mt-auto 사용
-                    cellContent += `<div class="mt-auto border-t pt-0.5 text-slate-500 font-bold h-[16px] overflow-hidden">${r.weight ? `⚖️ ${r.weight}${isMobile ? "" : "kg"}` : ''}</div>`;
+                    // 1. 모바일 항목 위치 고정 (gap-[2px]로 축소하여 튀어나감 방지)
+                    cellContent += `<div class="text-[9px] md:text-[11px] font-bold flex flex-col flex-grow ${isMobile ? 'gap-[2px]' : 'gap-0'} mt-1">`;
+                    cellContent += `<div class="h-[13px] overflow-hidden">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span>` : ''}</div>`;
+                    cellContent += `<div class="h-[13px] overflow-hidden">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span>` : ''}</div>`;
+                    cellContent += `<div class="h-[13px] overflow-hidden">${r.d_val ? `🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span>` : ''}</div>`;
+                    // 체중은 항상 맨 아래 위치하도록 mt-auto 사용하며 높이 15px로 고정
+                    cellContent += `<div class="mt-auto border-t pt-0.5 text-slate-500 font-bold h-[15px] overflow-hidden">${r.weight ? `⚖️ ${r.weight}${isMobile ? "" : "kg"}` : ''}</div>`;
                     cellContent += '</div>';
                 } else {
                     cellContent += `<div class="flex-grow"></div>`; 

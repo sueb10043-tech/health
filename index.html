@@ -29,12 +29,12 @@
         #analysis-result-content h3 { font-weight: 800; font-size: 1.1rem; margin-top: 1.2rem; color: #0369a1; border-left: 5px solid #0ea5e9; padding-left: 10px; }
         #analysis-result-content p { margin-bottom: 0.8rem; line-height: 1.7; font-size: 0.95rem; color: #334155; }
         .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
-        #ai-question-input::placeholder { font-size: 12px; }
+        #ai-question-input::placeholder { font-size: 12px; color: #94a3b8; }
     </style>
 </head>
 <body>
     <div id="app-container" class="main-wrapper">
-        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm transition-all duration-300 h-[64px]">
+        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
             <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full">
                 <div class="flex items-center gap-6">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-50 rounded-full text-slate-400 font-bold transition">〈</button>
@@ -56,7 +56,6 @@
                 </div>
             </section>
 
-            <!-- 입력 섹션 -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
                     <div class="flex justify-between items-center mb-6 border-b pb-3">
@@ -71,19 +70,19 @@
                             </div>
                             <div class="bg-orange-50/40 px-3 py-2 rounded-2xl border border-orange-100 flex flex-col gap-2.5">
                                 <div class="flex items-center">
-                                    <div class="flex items-center"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">⚖️ 체중</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[11px] font-bold text-orange-800/60">kg</span></div></div>
+                                    <div class="flex items-center"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">⚖️ 체중</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0" spellcheck="false"><span class="text-[11px] font-bold text-orange-800/60">kg</span></div></div>
                                     <div class="ml-auto flex items-center"><span class="w-[50px] font-bold text-orange-800 text-sm whitespace-nowrap">✨ 성공</span><div style="width: 10px;"></div><div class="flex items-center justify-center bg-white/5 p-1 rounded-lg border border-orange-200/10"><input type="checkbox" id="toilet_val" class="w-5 h-5 accent-sky-400 cursor-pointer"></div></div>
                                 </div>
-                                <div class="flex items-center border-t border-orange-200/30 pt-2"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">👟 걸음</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" id="walk_val" class="sugar-input !w-[75px]" placeholder="0"><span class="text-[11px] font-bold text-orange-800/60">보</span></div></div>
+                                <div class="flex items-center border-t border-orange-200/30 pt-2"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">👟 걸음</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" id="walk_val" class="sugar-input !w-[75px]" placeholder="0" spellcheck="false"><span class="text-[11px] font-bold text-orange-800/60">보</span></div></div>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 혈당</span><div class="flex gap-2 items-center"><button onclick="fetchMealData()" class="bg-white p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button><input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div></div>
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 혈당</span><div class="flex gap-2 items-center"><button onclick="fetchMealData()" class="bg-white p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button><input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0" spellcheck="false"></div></div>
                                 <textarea id="l_memo" class="memo-area h-32" placeholder="점심 메모" spellcheck="false"></textarea>
                             </div>
                             <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 혈당</span><input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 혈당</span><input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0" spellcheck="false"></div>
                                 <textarea id="d_memo" class="memo-area h-32" placeholder="저녁 메모" spellcheck="false"></textarea>
                             </div>
                         </div>
@@ -92,7 +91,6 @@
                 </div>
             </section>
 
-            <!-- 차트 섹션 -->
             <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
@@ -106,45 +104,29 @@
                 </div>
             </section>
             
-            <!-- 분석 섹션 (복구 및 개선본) -->
             <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto text-center">
-                <div class="bg-white rounded-[2.5rem] border border-slate-200 p-6 md:p-10 shadow-sm">
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-xl font-black text-slate-800 leading-tight">🧠 AI 스마트 분석</h2>
-                        <button onclick="runAIAnalysis('general')" id="analysis-btn" class="bg-sky-500 text-white px-3 py-2 rounded-xl text-[11px] font-bold shadow-sm hover:bg-sky-600 transition active:scale-95 disabled:bg-slate-300">📊 전체 리포트</button>
-                    </div>
-
-                    <div class="bg-slate-50 rounded-3xl p-4 mb-8 border border-slate-200 text-left">
-                        <div class="flex gap-2 items-stretch">
-                            <textarea id="ai-question-input" class="flex-grow bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:border-sky-400 outline-none shadow-sm resize-none" rows="2" placeholder="데이터 기반 질문 또는 내일 급식 분석 요청" spellcheck="false"></textarea>
-                            <button onclick="runAIAnalysis('question')" id="ask-btn" class="bg-slate-800 text-white w-14 rounded-2xl hover:bg-slate-700 transition active:scale-95 disabled:bg-slate-300 shadow-md flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
+                <div class="bg-white rounded-[2.5rem] border border-slate-200 p-6 md:p-10 shadow-sm mt-2 md:mt-0">
+                    <div class="flex items-center justify-between mb-8"><h2 class="text-xl font-black text-slate-800 leading-tight">🧠 AI 스마트 분석</h2><button onclick="runAIAnalysis('general')" id="analysis-btn" class="bg-sky-500 text-white px-3 py-2 rounded-xl text-[11px] font-bold shadow-sm hover:bg-sky-600 transition active:scale-95 disabled:bg-slate-300">📊 전체 리포트</button></div>
+                    <div class="bg-slate-50 rounded-3xl p-4 mb-8 border border-slate-200 text-left"><div class="flex gap-2 items-stretch"><textarea id="ai-question-input" class="flex-grow bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:border-sky-400 outline-none shadow-sm resize-none" rows="2" placeholder="기록 데이터 기반 질문 또는 내일 급식 분석 요청" spellcheck="false"></textarea><button onclick="runAIAnalysis('question')" id="ask-btn" class="bg-slate-800 text-white w-14 rounded-2xl hover:bg-slate-700 transition active:scale-95 disabled:bg-slate-300 shadow-md flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div></div>
                     <div id="analysis-loading" class="hidden py-16"><div class="loader mb-4"></div><p class="text-sky-600 font-black animate-pulse">데이터 정밀 분석 중...</p></div>
-                    <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner">
-                        <div id="analysis-result-content" class="whitespace-pre-wrap"></div>
-                    </div>
+                    <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner"><div id="analysis-result-content" class="whitespace-pre-wrap"></div></div>
                 </div>
             </section>
 
-            <!-- 설정 섹션 -->
             <section id="view-settings" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
                     <div class="flex justify-between items-center mb-8"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">⚙️ 학교 설정</h2><button onclick="switchView('calendar')" class="text-slate-300 text-2xl px-2">✕</button></div>
                     <div id="current-school-info" class="p-5 bg-sky-50 text-sky-700 rounded-2xl font-bold mb-6 italic text-center"><span id="school-name-display">학교 미설정</span></div>
-                    <div class="flex gap-2"><input type="text" id="school-search-input" class="flex-grow border border-slate-200 rounded-2xl px-5 py-3.5 bg-slate-50 shadow-inner outline-none focus:border-sky-300" placeholder="학교명 검색"><button onclick="searchSchool()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold shadow-md active:scale-95 transition">검색</button></div>
+                    <div class="flex gap-2"><input type="text" id="school-search-input" class="flex-grow border border-slate-200 rounded-2xl px-5 py-3.5 bg-slate-50 shadow-inner outline-none focus:border-sky-300" placeholder="학교명 검색" spellcheck="false"><button onclick="searchSchool()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold shadow-md active:scale-95 transition">검색</button></div>
                     <div id="school-search-results" class="max-h-64 overflow-y-auto mt-6 space-y-2 rounded-xl"></div>
                 </div>
             </section>
         </main>
 
-        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-md bg-white/90 backdrop-blur-xl border border-slate-200 flex justify-around py-2.5 md:py-4 rounded-[2.5rem] shadow-2xl z-50 transition-all duration-300">
-            <button onclick="handleAutoSaveBeforeSwitch('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 md:gap-1 tab-active flex-1"><span class="text-xl md:text-2xl">📅</span><span class="text-[10px] md:text-[11px] font-bold">달력</span></button>
-            <button onclick="handleAutoSaveBeforeSwitch('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">📈</span><span class="text-[10px] md:text-[11px] font-bold">차트</span></button>
-            <button onclick="handleAutoSaveBeforeSwitch('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">💡</span><span class="text-[10px] md:text-[11px] font-bold">분석</span></button>
+        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-md bg-white/90 backdrop-blur-xl border border-slate-200 flex justify-around py-1.5 md:py-4 rounded-[2.5rem] shadow-2xl z-50 transition-all duration-300">
+            <button onclick="handleAutoSaveBeforeSwitch('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0 md:gap-1 tab-active flex-1"><span class="text-xl md:text-2xl">📅</span><span class="text-[9px] md:text-[11px] font-bold">달력</span></button>
+            <button onclick="handleAutoSaveBeforeSwitch('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">📈</span><span class="text-[9px] md:text-[11px] font-bold">차트</span></button>
+            <button onclick="handleAutoSaveBeforeSwitch('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">💡</span><span class="text-[9px] md:text-[11px] font-bold">분석</span></button>
         </nav>
     </div>
     <div id="overlay" class="overlay" onclick="closeModal()"></div>
@@ -170,48 +152,46 @@
         }
         async function runAIAnalysis(mode) {
             const btnA = document.getElementById('analysis-btn'), btnB = document.getElementById('ask-btn'), loading = document.getElementById('analysis-loading'), container = document.getElementById('analysis-result-container'), content = document.getElementById('analysis-result-content'), qInput = document.getElementById('ai-question-input');
-            if (Object.keys(records).length === 0) { showMessageBox("기록된 데이터가 없습니다."); return; }
+            if (Object.keys(records).length === 0) { showMessageBox("기록된 데이터가 부족합니다."); return; }
             btnA.disabled = btnB.disabled = true; loading.classList.remove('hidden'); container.classList.add('hidden');
-            
-            // 모든 수치 데이터를 포함한 분석용 텍스트 생성
             const dataStr = Object.entries(records).sort((a,b)=>a[0].localeCompare(b[0])).slice(-30).map(([d,r])=>`${d}: 혈당(${r.m_val}/${r.l_val}/${r.d_val}), 체중(${r.weight}), 걸음(${r.walk}), 성공(${r.toilet?'Y':'N'})`).join('\n');
-            
             try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ type: "analyze", prompt: mode==='question' ? qInput.value : '전체 기록 정밀 분석 리포트', dataStr: dataStr }) });
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ type: "analyze", prompt: mode==='question' ? qInput.value : '기록 정밀 분석 리포트', dataStr: dataStr }) });
                 const result = await res.json();
                 if (result.error) throw new Error(typeof result.error === 'object' ? JSON.stringify(result.error) : result.error);
-                
                 content.innerHTML = result?.candidates?.[0]?.content?.parts?.[0]?.text.replace(/^### (.*$)/gim, '<h3>$1</h3>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
                 loading.classList.add('hidden'); container.classList.remove('hidden');
-            } catch (e) {
-                showMessageBox(`분석 실패: ${e.message}`);
-                loading.classList.add('hidden');
-            } finally { btnA.disabled = btnB.disabled = false; }
+            } catch (e) { showMessageBox(`분석 실패: ${e.message}`); loading.classList.add('hidden'); } finally { btnA.disabled = btnB.disabled = false; }
         }
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
             document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
             const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
+            const isMobile = window.innerWidth < 640;
             for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/50'}));
             for (let d = 1; d <= last; d++) {
                 const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const cell = Object.assign(document.createElement('div'), {className:'day-cell'});
                 const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 let dayColorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
-                let headerContent = `<div class="flex items-center justify-between w-full">`;
-                const successCircle = (r && r.toilet) ? 'bg-sky-100 text-sky-600 rounded-full w-6 h-6 flex items-center justify-center' : '';
-                headerContent += `<span class="text-xs font-bold ${dayColorClass} ${successCircle}">${d}</span>`;
+                
+                let headerContent = `<div class="flex items-center justify-between w-full h-5 md:h-6">`;
+                const circleStyle = (r && r.toilet) ? 'bg-sky-100 text-sky-600 rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center' : 'w-5 h-5 md:w-6 md:h-6 flex items-center justify-center';
+                headerContent += `<div class="${circleStyle}"><span class="text-xs font-bold ${dayColorClass}">${d}</span></div>`;
                 if (r && r.walk) headerContent += `<span class="text-[9px] md:text-[10px] text-slate-500 font-bold">${r.walk}<span class="hidden md:inline">보</span></span>`;
                 headerContent += `</div>`;
+
                 let cellContent = headerContent;
                 if (r) {
                     const chk = (v, t) => parseInt(v) <= t ? 'text-sky-500' : 'text-rose-500';
-                    cellContent += '<div class="text-[9px] md:text-[11px] font-bold mt-1 flex flex-col flex-grow">';
-                    cellContent += `<div class="h-4">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span>` : ''}</div>`;
-                    cellContent += `<div class="h-4">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span>` : ''}</div>`;
-                    cellContent += `<div class="h-4">${r.d_val ? `🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span>` : ''}</div>`;
-                    if (r.weight) cellContent += `<div class="mt-auto border-t pt-0.5 text-slate-500 font-bold">⚖️ ${r.weight}kg</div>`;
+                    // 모바일에서 혈당 항목 간 세로 간격을 4px로 수정 (gap-[4px])
+                    cellContent += '<div class="text-[9px] md:text-[11px] font-bold mt-1 flex flex-col flex-grow gap-[4px] md:gap-0">';
+                    cellContent += `<div class="md:h-4">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span>` : ''}</div>`;
+                    cellContent += `<div class="md:h-4">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span>` : ''}</div>`;
+                    cellContent += `<div class="md:h-4">${r.d_val ? `🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span>` : ''}</div>`;
+                    const weightUnit = isMobile ? "" : "kg";
+                    if (r.weight) cellContent += `<div class="mt-auto border-t pt-0.5 text-slate-500 font-bold">⚖️ ${r.weight}${weightUnit}</div>`;
                     else cellContent += `<div class="mt-auto"></div>`;
                     cellContent += '</div>';
                 }
@@ -223,8 +203,13 @@
         function switchView(n) {
             activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); document.getElementById(`view-${n}`).classList.remove('hidden');
             const h = document.getElementById('main-header'), nav = document.getElementById('bottom-nav');
-            if (n === 'input') { h.style.display = 'none'; nav.classList.remove('fixed', 'bottom-3', '-translate-x-1/2', 'left-1/2'); nav.classList.add('relative', 'mx-auto', 'mt-4', 'mb-10'); }
-            else { h.style.display = 'block'; nav.classList.add('fixed', 'bottom-3', '-translate-x-1/2', 'left-1/2'); nav.classList.remove('relative', 'mx-auto', 'mt-4', 'mb-10'); }
+            if (n === 'input' || n === 'analysis') { 
+                h.style.display = 'none'; 
+                if (n === 'input') { nav.classList.remove('fixed', 'bottom-3', '-translate-x-1/2', 'left-1/2'); nav.classList.add('relative', 'mx-auto', 'mt-4', 'mb-10'); }
+            } else { 
+                h.style.display = 'block'; 
+                nav.classList.add('fixed', 'bottom-3', '-translate-x-1/2', 'left-1/2'); nav.classList.remove('relative', 'mx-auto', 'mt-4', 'mb-10'); 
+            }
             document.querySelectorAll('#bottom-nav button').forEach(b => { if (b.id === `nav-${n}`) { b.classList.add('tab-active'); b.classList.remove('tab-inactive'); } else { b.classList.remove('tab-active'); b.classList.add('tab-inactive'); } });
             if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50); window.scrollTo(0,0);
         }

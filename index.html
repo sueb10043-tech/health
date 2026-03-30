@@ -13,9 +13,17 @@
         input[type=number] { -moz-appearance: textfield; }
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; }
-        .day-cell { min-height: 130px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 4px 8px 8px 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; }
-        @media (max-width: 640px) { .day-cell { min-height: 110px; padding: 4px 6px 6px 6px; } }
+        
+        /* 1. 모바일 높이 95px 고정 및 좌우 여백 4px(px-1) 설정 */
+        .day-cell { 
+            min-height: 130px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; 
+            padding: 4px 8px 8px 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; 
+        }
+        @media (max-width: 640px) { 
+            .day-cell { min-height: 95px; max-height: 95px; padding: 4px 4px 4px 4px; } 
+        }
         .day-cell:hover { background-color: #f1f5f9; }
+        
         .sugar-input { width: 80px; padding: 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 700; font-size: 15px; outline: none; background-color: #ffffff !important; height: 38px !important; }
         .sugar-input:focus { border-color: #0ea5e9; }
         .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.5; font-size: 15px; outline: none; background-color: #fff; resize: none; }
@@ -129,8 +137,12 @@
             <button onclick="handleAutoSaveBeforeSwitch('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">💡</span><span class="text-[9px] md:text-[11px] font-bold">분석</span></button>
         </nav>
     </div>
+
     <div id="overlay" class="overlay" onclick="closeModal()"></div>
-    <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-left max-h-[350px] overflow-y-auto whitespace-pre-wrap text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg transition active:scale-95">확인</button></div>
+    <div id="message-box" class="custom-modal">
+        <div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-left max-h-[350px] overflow-y-auto whitespace-pre-wrap text-sm"></div>
+        <button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg transition active:scale-95">확인</button>
+    </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec";
@@ -152,7 +164,7 @@
         }
         async function runAIAnalysis(mode) {
             const btnA = document.getElementById('analysis-btn'), btnB = document.getElementById('ask-btn'), loading = document.getElementById('analysis-loading'), container = document.getElementById('analysis-result-container'), content = document.getElementById('analysis-result-content'), qInput = document.getElementById('ai-question-input');
-            if (Object.keys(records).length === 0) { showMessageBox("데이터가 부족합니다."); return; }
+            if (Object.keys(records).length === 0) { showMessageBox("기록된 데이터가 부족합니다."); return; }
             btnA.disabled = btnB.disabled = true; loading.classList.remove('hidden'); container.classList.add('hidden');
             const dataStr = Object.entries(records).sort((a,b)=>a[0].localeCompare(b[0])).slice(-30).map(([d,r])=>`${d}: 혈당(${r.m_val}/${r.l_val}/${r.d_val}), 체중(${r.weight}), 걸음(${r.walk}), 성공(${r.toilet?'Y':'N'})`).join('\n');
             try {
@@ -163,6 +175,7 @@
                 loading.classList.add('hidden'); container.classList.remove('hidden');
             } catch (e) { showMessageBox(`분석 실패: ${e.message}`); loading.classList.add('hidden'); } finally { btnA.disabled = btnB.disabled = false; }
         }
+
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
@@ -177,38 +190,39 @@
             for (let d = 1; d <= last; d++) {
                 const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const cell = Object.assign(document.createElement('div'), {className:'day-cell'});
-                
-                // 오늘 날짜 강조: 테두리만 하늘색 테마 반영 (배경색은 원래 색으로 복구)
-                if (dateKey === todayStr) {
-                    cell.classList.add('ring-2', 'ring-inset', 'ring-sky-400/60', 'z-10');
-                }
+                if (dateKey === todayStr) cell.classList.add('ring-2', 'ring-inset', 'ring-sky-400/60', 'z-10');
 
                 const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 let dayColorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
                 
-                let headerContent = `<div class="flex items-center justify-between w-full h-5 md:h-6">`;
-                const circleStyle = (r && r.toilet) ? 'bg-sky-100 text-sky-600 rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center' : 'w-5 h-5 md:w-6 md:h-6 flex items-center justify-center';
-                headerContent += `<div class="${circleStyle}"><span class="text-xs font-bold ${dayColorClass}">${d}</span></div>`;
-                if (r && r.walk) headerContent += `<span class="text-[9px] md:text-[10px] text-slate-500 font-bold">${r.walk}<span class="hidden md:inline">보</span></span>`;
+                // 2. 모바일 날짜 원형 테두리 18px로 축소 (w-4.5 h-4.5) 및 양끝 정렬
+                let headerContent = `<div class="flex items-center justify-between w-full">`;
+                const circleSize = isMobile ? 'w-[18px] h-[18px]' : 'w-6 h-6';
+                const successCircle = (r && r.toilet) ? `bg-sky-100 text-sky-600 rounded-full ${circleSize} flex items-center justify-center` : `${circleSize} flex items-center justify-center`;
+                headerContent += `<div class="${successCircle}"><span class="text-[10px] md:text-xs font-bold ${dayColorClass}">${d}</span></div>`;
+                if (r && r.walk) headerContent += `<span class="text-[8px] md:text-[10px] text-slate-500 font-bold ml-1">${r.walk}<span class="hidden md:inline">보</span></span>`;
                 headerContent += `</div>`;
 
                 let cellContent = headerContent;
                 if (r) {
                     const chk = (v, t) => parseInt(v) <= t ? 'text-sky-500' : 'text-rose-500';
-                    cellContent += '<div class="text-[9px] md:text-[11px] font-bold mt-1 flex flex-col flex-grow gap-[4px] md:gap-0">';
-                    cellContent += `<div class="md:h-4">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span>` : ''}</div>`;
-                    cellContent += `<div class="h-4">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span>` : ''}</div>`;
-                    cellContent += `<div class="h-4">${r.d_val ? `🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span>` : ''}</div>`;
-                    const weightUnit = isMobile ? "" : "kg";
-                    if (r.weight) cellContent += `<div class="mt-auto border-t pt-0.5 text-slate-500 font-bold">⚖️ ${r.weight}${weightUnit}</div>`;
-                    else cellContent += `<div class="mt-auto"></div>`;
+                    // 3. 모바일 균등 분산 배치 (justify-between) 및 여백 제거
+                    cellContent += `<div class="text-[9px] md:text-[11px] font-bold flex flex-col flex-grow ${isMobile ? 'justify-between' : 'gap-0'} mt-1">`;
+                    if (r.m_val) cellContent += `<div>🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span></div>`;
+                    if (r.l_val) cellContent += `<div>☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span></div>`;
+                    if (r.d_val) cellContent += `<div>🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span></div>`;
+                    if (r.weight) cellContent += `<div class="border-t pt-0.5 text-slate-500 font-bold">⚖️ ${r.weight}${isMobile ? "" : "kg"}</div>`;
                     cellContent += '</div>';
+                } else {
+                    cellContent += `<div class="flex-grow"></div>`; // 빈 칸 높이 유지용
                 }
+                
                 cell.innerHTML = cellContent;
                 cell.onclick = () => { selectedDateStr = dateKey; const rec = records[dateKey]||{}; const days = ['일', '월', '화', '수', '목', '금', '토']; document.getElementById('input-date-title').innerText = `${dateKey}(${days[dayOfWeek]})`; ['m_val','m_memo','l_val','l_memo','d_val','d_memo','weight_val','walk_val','memo_val'].forEach(id => { const el = document.getElementById(id); if (el) { el.value = rec[id === 'memo_val' ? 'memo' : (id === 'weight_val' ? 'weight' : (id === 'walk_val' ? 'walk' : id))] || ''; if (id === 'm_val') validateInputColor(el, 100); if (id === 'l_val' || id === 'd_val') validateInputColor(el, 180); } }); document.getElementById('toilet_val').checked = !!rec.toilet; switchView('input'); };
                 body.appendChild(cell);
             }
         }
+
         function switchView(n) {
             activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); document.getElementById(`view-${n}`).classList.remove('hidden');
             const h = document.getElementById('main-header'), nav = document.getElementById('bottom-nav');

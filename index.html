@@ -1,81 +1,331 @@
-/**
- * 혈당 및 체중 매니저 Pro - 스프레드시트 연동 최종본
- * 스프레드시트 컬럼 인덱스 (image_3cd69d.png 기준):
- * 0:A(날짜), 1:B(아침혈당), 2:C(아침메모), 3:D(점심식단), 4:E(점심혈당), 5:F(저녁식단), 6:G(저녁혈당), 7:H(기타메모), 8:I(체중), 9:J(걸음), 10:K(성공)
- */
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>혈당 및 체중 매니저 Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 차트 플러그인: 데이터 라벨 및 가이드라인 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
+        /* [요청사항] 숫자 입력창 화살표 제거 및 완전 중앙 정렬 */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; text-align: center !important; padding: 0 !important; }
 
-function doGet() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = sheet.getDataRange().getValues();
-  const records = {};
-  
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (!row[0]) continue;
-    
-    try {
-      let dateObj = row[0] instanceof Date ? row[0] : new Date(row[0]);
-      // 날짜 오차 보정을 위해 12시간을 더한 뒤 yyyy-MM-dd로 변환
-      const dateKey = Utilities.formatDate(new Date(dateObj.getTime() + (12 * 60 * 60 * 1000)), "GMT+9", "yyyy-MM-dd");
-      
-      records[dateKey] = {
-        date: dateKey,
-        morning_sugar: row[1] || "",      // B열: 아침 혈당
-        morning_memo: row[2] || "",       // C열: 아침 메모
-        lunch_menu: row[3] || "",         // D열: 점심 식단 (메뉴)
-        lunch_sugar: row[4] || "",        // E열: 점심 혈당
-        dinner_menu: row[5] || "",        // F열: 저녁 식단 (메뉴)
-        dinner_sugar: row[6] || "",       // G열: 저녁 혈당
-        extra_memo: row[7] || "",         // H열: 기타 메모
-        body_weight: row[8] || "",        // I열: 체중
-        step_count: row[9] || "",         // J열: 걸음수
-        is_success: String(row[10]).toUpperCase() === "TRUE" || row[10] === true // K열: 성공
-      };
-    } catch (e) { console.error("데이터 읽기 오류: " + e.toString()); }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({ records: records }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+        .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; table-layout: fixed; }
+        
+        /* [요청사항] 달력 셀 높이 고정 및 레이아웃 깨짐 방지 */
+        .day-cell { min-height: 140px; height: 140px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
+        @media (max-width: 640px) { .day-cell { min-height: 115px; height: 115px; padding: 4px; } }
+        .day-cell:hover { background-color: #f8fafc; }
+        
+        .sugar-input { width: 80px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 700; font-size: 17px; outline: none; height: 38px !important; }
+        .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.6; font-size: 15px; outline: none; background-color: #fff; resize: none; }
+        
+        .tab-active { color: #0ea5e9; font-weight: 800; position: relative; }
+        .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
+        .tab-inactive { color: #94a3b8; }
+        
+        .custom-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); z-index: 10000; display: none; width: 90%; max-width: 500px; }
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; z-index: 9000; backdrop-filter: blur(4px); }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0ea5e9; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="app-container" class="main-wrapper">
+        <!-- 상단 헤더 -->
+        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
+            <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
+                <div class="flex items-center gap-6">
+                    <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold">〈</button>
+                    <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
+                    <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold">〉</button>
+                </div>
+                <div id="sync-status" class="absolute right-6 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
+            </div>
+        </header>
 
-function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  let data;
-  try {
-    data = JSON.parse(e.postData.contents);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ result: "error" })).setMimeType(ContentService.MimeType.JSON);
-  }
+        <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-24">
+            <!-- 달력 섹션 -->
+            <section id="view-calendar" class="view-section">
+                <div class="max-w-4xl mx-auto border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white">
+                    <div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] py-3 text-slate-500 uppercase tracking-widest">
+                        <div class="text-rose-500">Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div class="text-sky-500">Sat</div>
+                    </div>
+                    <div id="calendar-body" class="calendar-grid"></div>
+                </div>
+            </section>
 
-  const dateStr = data.date;
-  const values = sheet.getDataRange().getValues();
-  let targetRow = -1;
+            <!-- 입력 섹션 -->
+            <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
+                    <div class="flex justify-between items-center mb-6 border-b pb-3">
+                        <h2 id="input-date-title" class="font-bold text-slate-800 text-xl tracking-tight"></h2>
+                        <button onclick="handleCloseInput()" class="text-slate-300 text-3xl font-light hover:text-slate-500 transition-colors">✕</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 아침 -->
+                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="morning_sugar" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
+                                <textarea id="morning_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모"></textarea>
+                            </div>
+                            <!-- 체중 및 성공 -->
+                            <div class="bg-orange-50/40 p-4 rounded-2xl border border-orange-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="body_weight" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[12px] font-bold">kg</span></div>
+                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">✨ 성공</span><input type="checkbox" id="is_success" class="w-6 h-6 accent-sky-400 cursor-pointer"></div>
+                                </div>
+                                <div class="flex items-center border-t border-orange-200/30 pt-3"><span class="font-bold text-orange-800 text-sm">👟 걸음수</span><div class="ml-auto flex items-center gap-2"><input type="number" id="step_count" class="sugar-input !w-[90px]" placeholder="0"></div></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 점심 (D열: 혈당, E열: 메모) -->
+                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span><input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
+                                <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
+                            </div>
+                            <!-- 저녁 (F열: 혈당, G열: 메모) -->
+                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="dinner_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
+                                <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="extra_memo" class="memo-area h-[60px]" placeholder="특이사항 기록"></textarea></div>
+                    </div>
+                </div>
+            </section>
 
-  for (let i = 1; i < values.length; i++) {
-    if (values[i][0]) {
-      let rowDate = values[i][0] instanceof Date ? values[i][0] : new Date(values[i][0]);
-      let formattedRowDate = Utilities.formatDate(new Date(rowDate.getTime() + (12 * 60 * 60 * 1000)), "GMT+9", "yyyy-MM-dd");
-      if (formattedRowDate === dateStr) {
-        targetRow = i + 1;
-        break;
-      }
-    }
-  }
+            <!-- 차트 섹션 -->
+            <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex gap-2">
+                            <button onclick="setChartType('sugar')" id="chart-btn-sugar" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-[13px] font-bold shadow-md transition">혈당 추이</button>
+                            <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[13px] font-bold transition">체중 변화</button>
+                        </div>
+                        <!-- [요청사항] 범례를 버튼과 같은 줄에 배치 -->
+                        <div id="chart-legend-container" class="flex gap-3 text-[11px] font-bold text-slate-500"></div>
+                    </div>
+                    <div class="w-full h-[400px] relative"><canvas id="mainChart"></canvas></div>
+                </div>
+            </section>
+        </main>
 
-  // 저장할 데이터 배열 (A~K 컬럼 순서 그대로 유지)
-  const rowData = [
-    dateStr,
-    data.morning_sugar, data.morning_memo,
-    data.lunch_menu, data.lunch_sugar,
-    data.dinner_menu, data.dinner_sugar,
-    data.extra_memo, data.body_weight, data.step_count, data.is_success
-  ];
+        <!-- 하단 네비게이션 -->
+        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[60%] max-w-xs bg-white/95 backdrop-blur-xl border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
+            <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-2xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
+            <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
+        </nav>
+    </div>
 
-  if (targetRow > 0) {
-    sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
+    <div id="overlay" class="overlay" onclick="closeModal()"></div>
+    <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">확인</button></div>
 
-  return ContentService.createTextOutput(JSON.stringify({ result: "success" })).setMimeType(ContentService.MimeType.JSON);
-}
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec"; 
+        
+        let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar';
+
+        // 차트 플러그인 등록
+        Chart.register(ChartDataLabels);
+
+        window.onload = async () => { 
+            const local = localStorage.getItem('health_records_v6');
+            if(local) { records = JSON.parse(local); renderCalendar(); }
+            if (isValidUrl()) await syncWithCloud(); 
+        };
+
+        function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
+
+        async function syncWithCloud() {
+            if (isSyncing || !isValidUrl()) return; 
+            isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
+            try { 
+                const response = await fetch(SCRIPT_URL); 
+                const data = await response.json(); 
+                if (data && data.records) { 
+                    records = data.records;
+                    localStorage.setItem('health_records_v6', JSON.stringify(records)); 
+                    renderCalendar(); 
+                }
+            } catch (e) { console.error("Cloud Sync Failed", e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
+        }
+
+        async function handleSave() {
+            if (!selectedDateStr) return;
+            const record = { 
+                date: selectedDateStr, 
+                morning_sugar: document.getElementById('morning_sugar').value, 
+                morning_memo: document.getElementById('morning_memo').value, 
+                lunch_sugar: document.getElementById('lunch_sugar').value, 
+                lunch_memo: document.getElementById('lunch_memo').value, 
+                dinner_sugar: document.getElementById('dinner_sugar').value, 
+                dinner_memo: document.getElementById('dinner_memo').value, 
+                extra_memo: document.getElementById('extra_memo').value, 
+                body_weight: document.getElementById('body_weight').value, 
+                step_count: document.getElementById('step_count').value, 
+                is_success: document.getElementById('is_success').checked 
+            };
+            records[selectedDateStr] = record; 
+            localStorage.setItem('health_records_v6', JSON.stringify(records));
+            if (isValidUrl()) {
+                try {
+                    await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); 
+                } catch (e) { }
+            }
+        }
+
+        async function handleCloseInput() { await handleSave(); switchView('calendar'); }
+
+        function renderCalendar() {
+            const body = document.getElementById('calendar-body'); body.innerHTML = '';
+            const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
+            document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
+            const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
+            for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/40'}));
+            
+            for (let d = 1; d <= last; d++) {
+                const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const cell = Object.assign(document.createElement('div'), {className:'day-cell flex flex-col'});
+                const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
+                let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
+                let isSuccess = r && (r.is_success === true || String(r.is_success).toUpperCase() === "TRUE");
+                
+                // [요청사항] 날짜 원과 걸음수 수평 정렬 및 폰트 크기 +1px
+                let header = `<div class="flex justify-between items-center w-full h-7 mb-1 shrink-0">
+                                <div class="w-7 h-7 flex items-center justify-center ${isSuccess ? 'bg-sky-100 rounded-full text-sky-600' : ''}">
+                                    <span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span>
+                                </div>
+                                ${(r && r.step_count) ? `<span class="text-[10px] md:text-[12px] text-slate-400 font-extrabold tracking-tighter self-center">${r.step_count}보</span>` : ''}
+                             </div>`;
+
+                // [요청사항] 식단 메뉴 대신 혈당 수치만 표시 및 폰트 크기 +1px
+                let bodyContent = `<div class="flex-grow flex flex-col gap-0.5 text-[11px] md:text-[12px] font-bold overflow-hidden">`;
+                if (r) {
+                    const chk = (v, t) => parseFloat(v) <= t ? 'text-sky-500' : 'text-rose-500';
+                    if(r.morning_sugar) bodyContent += `<div class="truncate">🌥️ <span class="${chk(r.morning_sugar, 100)}">${r.morning_sugar}</span></div>`;
+                    if(r.lunch_sugar) bodyContent += `<div class="truncate">☀️ <span class="${chk(r.lunch_sugar, 180)}">${r.lunch_sugar}</span></div>`;
+                    if(r.dinner_sugar) bodyContent += `<div class="truncate">🌙 <span class="${chk(r.dinner_sugar, 180)}">${r.dinner_sugar}</span></div>`;
+                }
+                bodyContent += `</div>`;
+
+                // [요청사항] 체중 하단 고정 및 PC 버전 kg 표시
+                let footer = (r && r.body_weight && parseFloat(r.body_weight) > 0) ? 
+                    `<div class="mt-auto border-t border-slate-100 pt-1 text-[11px] md:text-[12px] text-slate-400 font-bold truncate shrink-0">⚖️ ${r.body_weight}<span class="hidden md:inline ml-0.5">kg</span></div>` : 
+                    `<div class="mt-auto h-[18px] shrink-0"></div>`;
+
+                cell.innerHTML = header + bodyContent + footer;
+                cell.onclick = () => { 
+                    selectedDateStr = dateKey; 
+                    const rec = records[dateKey]||{}; 
+                    document.getElementById('input-date-title').innerText = `${dateKey}`;
+                    const fieldMap = {
+                        'morning_sugar': rec.morning_sugar, 'morning_memo': rec.morning_memo,
+                        'lunch_sugar': rec.lunch_sugar, 'lunch_memo': rec.lunch_memo,
+                        'dinner_sugar': rec.dinner_sugar, 'dinner_memo': rec.dinner_memo,
+                        'extra_memo': rec.extra_memo, 'body_weight': rec.body_weight, 'step_count': rec.step_count
+                    };
+                    Object.keys(fieldMap).forEach(id => {
+                        const el = document.getElementById(id);
+                        if(el) { el.value = fieldMap[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); }
+                    });
+                    document.getElementById('is_success').checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE");
+                    switchView('input');
+                };
+                body.appendChild(cell);
+            }
+        }
+
+        function switchView(n) {
+            activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); 
+            document.getElementById(`view-${n}`).classList.remove('hidden');
+            document.getElementById('main-header').style.display = (n === 'input') ? 'none' : 'block';
+            document.querySelectorAll('#bottom-nav button').forEach(b => { 
+                if (b.id === `nav-${n}`) { b.classList.replace('tab-inactive', 'tab-active'); } 
+                else { b.classList.replace('tab-active', 'tab-inactive'); }
+            });
+            if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50);
+            window.scrollTo(0,0);
+        }
+
+        function validateInputColor(el, t) { const val = parseFloat(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
+        function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); }
+        function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
+        function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
+        
+        function updateChart() {
+            const canvas = document.getElementById('mainChart'); if(!canvas) return;
+            const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
+            const labels = Array.from({length:lastDay}, (_,i)=>i+1);
+            const getVal = (day, key) => { 
+                const dk = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const val = records[dk]?.[key] ? parseFloat(records[dk][key]) : null;
+                return (val === 0) ? null : val;
+            };
+
+            const legendContainer = document.getElementById('chart-legend-container');
+            legendContainer.innerHTML = '';
+            const addLegend = (label, color) => {
+                legendContainer.innerHTML += `<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color:${color}"></span>${label}</div>`;
+            };
+
+            let datasets = [], annotations = {};
+            if(currentChartType === 'sugar') {
+                datasets = [
+                    { label: '아침', data: labels.map(d => getVal(d, 'morning_sugar')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.4, spanGaps: true, datalabels: { display: false } },
+                    { label: '점심', data: labels.map(d => getVal(d, 'lunch_sugar')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.4, spanGaps: true, datalabels: { display: false } },
+                    { label: '저녁', data: labels.map(d => getVal(d, 'dinner_sugar')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.4, spanGaps: true, datalabels: { display: false } }
+                ];
+                addLegend('아침', '#7dd3fc'); addLegend('점심', '#fb923c'); addLegend('저녁', '#1e3a8a');
+                
+                // [요청사항] 혈당 가이드라인 짙은 회색 실선
+                annotations = {
+                    line1: { type: 'line', yMin: 100, yMax: 100, borderColor: '#555', borderWidth: 1.5, label: { display: false } },
+                    line2: { type: 'line', yMin: 180, yMax: 180, borderColor: '#555', borderWidth: 1.5, label: { display: false } }
+                };
+            } else {
+                datasets = [{ 
+                    label: '체중(kg)', data: labels.map(d => getVal(d, 'body_weight')), borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.4, spanGaps: true, 
+                    // [요청사항] 점 위에 숫자 표시
+                    datalabels: { display: true, align: 'top', font: { weight: 'bold', size: 10 } } 
+                }];
+                addLegend('체중(kg)', '#0ea5e9');
+            }
+
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            // [요청사항] 체중 차트 범위 고정 (45~65)
+                            min: currentChartType === 'weight' ? 45 : undefined, 
+                            max: currentChartType === 'weight' ? 65 : undefined,
+                            grid: { color: '#f1f5f9' } 
+                        } 
+                    },
+                    plugins: { legend: { display: false }, datalabels: { color: '#64748b' }, annotation: { annotations } }
+                }
+            });
+        }
+        function setChartType(t) { 
+            currentChartType = t; 
+            const btnS = document.getElementById('chart-btn-sugar'), btnW = document.getElementById('chart-btn-weight');
+            if(t==='sugar'){ btnS.classList.replace('bg-slate-100','bg-sky-500'); btnS.classList.replace('text-slate-500','text-white'); btnW.classList.replace('bg-sky-500','bg-slate-100'); btnW.classList.replace('text-white','text-slate-500'); }
+            else { btnW.classList.replace('bg-slate-100','bg-sky-500'); btnW.classList.replace('text-slate-500','text-white'); btnS.classList.replace('bg-sky-500','bg-slate-100'); btnS.classList.replace('text-white','text-slate-500'); }
+            updateChart(); 
+        }
+    </script>
+</body>
+</html>

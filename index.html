@@ -97,14 +97,15 @@
                             <!-- 점심 -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span><input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
-                                <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
+                                <textarea id="lunch_menu" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
                             </div>
                             <!-- 저녁 -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="dinner_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
-                                <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
+                                <textarea id="dinner_menu" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
                             </div>
                         </div>
+                        <!-- [수정] ID를 memo_val에서 extra_memo로 변경하여 JS 오류 해결 -->
                         <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="extra_memo" class="memo-area h-[60px]" placeholder="특이사항 기록"></textarea></div>
                     </div>
                 </div>
@@ -165,21 +166,30 @@
 
         async function handleSave() {
             if (!selectedDateStr) return;
+            
+            // [방어 코드] 엘리먼트 존재 여부 확인 후 값 추출
+            const getValue = id => {
+                const el = document.getElementById(id);
+                return el ? (el.type === 'checkbox' ? el.checked : el.value) : '';
+            };
+
             const record = { 
                 date: selectedDateStr, 
-                morning_sugar: document.getElementById('morning_sugar').value, 
-                morning_memo: document.getElementById('morning_memo').value, 
-                lunch_sugar: document.getElementById('lunch_sugar').value, 
-                lunch_memo: document.getElementById('lunch_memo').value, 
-                dinner_sugar: document.getElementById('dinner_sugar').value, 
-                dinner_menu: document.getElementById('dinner_menu').value, 
-                extra_memo: document.getElementById('extra_memo').value, 
-                body_weight: document.getElementById('body_weight').value, 
-                step_count: document.getElementById('step_count').value, 
-                is_success: document.getElementById('is_success').checked 
+                morning_sugar: getValue('morning_sugar'), 
+                morning_memo: getValue('morning_memo'), 
+                lunch_sugar: getValue('lunch_sugar'), 
+                lunch_menu: getValue('lunch_menu'), 
+                dinner_sugar: getValue('dinner_sugar'), 
+                dinner_menu: getValue('dinner_menu'), 
+                extra_memo: getValue('extra_memo'), 
+                body_weight: getValue('body_weight'), 
+                step_count: getValue('step_count'), 
+                is_success: getValue('is_success') 
             };
+            
             records[selectedDateStr] = record; 
             localStorage.setItem('health_records_v6', JSON.stringify(records));
+            
             if (isValidUrl()) {
                 try {
                     await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); 
@@ -205,7 +215,6 @@
                 const r = records[dateKey];
                 const dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 
-                // [수정] 오늘 날짜 테두리 체크
                 const isToday = dateKey === todayStr;
                 const cell = Object.assign(document.createElement('div'), {
                     className: `day-cell flex flex-col ${isToday ? 'today-border' : ''}`
@@ -214,7 +223,6 @@
                 let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
                 let isSuccess = r && (r.is_success === true || String(r.is_success).toUpperCase() === "TRUE");
                 
-                // [수정] 날짜 숫자 아래 여백 절반(mb-0.5), 걸음수 0.5px 축소 및 '보' 삭제
                 let header = `<div class="flex justify-between items-center w-full h-6 mb-0.5 shrink-0">
                                 <div class="w-6 h-6 flex items-center justify-center ${isSuccess ? 'bg-sky-100 rounded-full text-sky-600' : ''}">
                                     <span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span>
@@ -222,7 +230,6 @@
                                 ${(r && r.step_count) ? `<span class="text-[9.5px] md:text-[11.5px] text-slate-400 font-extrabold tracking-tighter self-center">${r.step_count}</span>` : ''}
                              </div>`;
 
-                // [수정] 항목별 세로 간격 최소화(gap-0)
                 let bodyContent = `<div class="flex-grow flex flex-col gap-0 text-[11px] md:text-[12px] font-bold overflow-hidden leading-tight">`;
                 if (r) {
                     const chk = (v, t) => parseFloat(v) <= t ? 'text-sky-500' : 'text-rose-500';
@@ -232,7 +239,6 @@
                 }
                 bodyContent += `</div>`;
 
-                // 체중 하단 고정 (패딩 최소화)
                 let footer = (r && r.body_weight && parseFloat(r.body_weight) > 0) ? 
                     `<div class="mt-auto border-t border-slate-100 pt-0.5 text-[11px] md:text-[12px] text-slate-400 font-bold truncate shrink-0">⚖️${r.body_weight}<span class="hidden md:inline ml-0.5">kg</span></div>` : 
                     `<div class="mt-auto h-[16px] shrink-0"></div>`;
@@ -242,17 +248,21 @@
                     selectedDateStr = dateKey; 
                     const rec = records[dateKey]||{}; 
                     document.getElementById('input-date-title').innerText = `${dateKey}`;
+                    
                     const fieldMap = {
                         'morning_sugar': rec.morning_sugar, 'morning_memo': rec.morning_memo,
                         'lunch_sugar': rec.lunch_sugar, 'lunch_menu': rec.lunch_menu,
                         'dinner_sugar': rec.dinner_sugar, 'dinner_menu': rec.dinner_menu,
                         'extra_memo': rec.extra_memo, 'body_weight': rec.body_weight, 'step_count': rec.step_count
                     };
+                    
                     Object.keys(fieldMap).forEach(id => {
                         const el = document.getElementById(id);
                         if(el) { el.value = fieldMap[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); }
                     });
-                    document.getElementById('is_success').checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE");
+                    const successEl = document.getElementById('is_success');
+                    if(successEl) successEl.checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE");
+                    
                     switchView('input');
                 };
                 body.appendChild(cell);

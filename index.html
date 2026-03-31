@@ -1,327 +1,112 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>혈당 및 체중 매니저 Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
-        
-        /* [수정] 모든 숫자 입력창 화살표 제거 및 완전 중앙 정렬 */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; text-align: center !important; padding-left: 0 !important; padding-right: 0 !important; }
+/**
+ * 혈당 및 체중 매니저 Pro - 통합 백엔드 (모델 자동 탐색 및 상세 에러 코드 반환)
+ */
 
-        .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; }
-        .day-cell { min-height: 130px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; }
-        @media (max-width: 640px) { .day-cell { min-height: 105px; max-height: 105px; padding: 4px; } }
-        .day-cell:hover { background-color: #f1f5f9; }
-        
-        .sugar-input { width: 80px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 700; font-size: 16px; outline: none; height: 38px !important; }
-        .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.6; font-size: 14px; outline: none; background-color: #fff; resize: none; }
-        
-        .tab-active { color: #0ea5e9; font-weight: 800; position: relative; }
-        .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
-        .tab-inactive { color: #94a3b8; }
-        
-        .custom-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); z-index: 10000; display: none; width: 90%; max-width: 500px; }
-        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; z-index: 9000; backdrop-filter: blur(4px); }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0ea5e9; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div id="app-container" class="main-wrapper">
-        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
-            <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
-                <div class="flex items-center gap-6">
-                    <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〈</button>
-                    <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
-                    <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〉</button>
-                </div>
-                <div id="sync-status" class="absolute right-6 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
-            </div>
-        </header>
+const API_KEY = "AIzaSyBsOtIZo9_V0b-z0mZpjdBVAMDqLCXUeb4"; 
+const DATA_KEY = 'health_records_v6';
+const SCHOOL_KEY = 'health_school_v6';
 
-        <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-24">
-            <section id="view-calendar" class="view-section">
-                <div class="max-w-4xl mx-auto border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white">
-                    <div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] py-3 text-slate-500 uppercase tracking-widest">
-                        <div class="text-rose-500">Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div class="text-sky-500">Sat</div>
-                    </div>
-                    <div id="calendar-body" class="calendar-grid"></div>
-                </div>
-            </section>
+function doGet() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  const recordsStr = scriptProps.getProperty(DATA_KEY);
+  const records = recordsStr ? JSON.parse(recordsStr) : {};
+  const schoolInfo = JSON.parse(scriptProps.getProperty(SCHOOL_KEY) || 'null');
+  
+  return ContentService.createTextOutput(JSON.stringify({ records, schoolInfo }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
-            <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
-                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
-                    <div class="flex justify-between items-center mb-6 border-b pb-3">
-                        <h2 id="input-date-title" class="font-bold text-slate-800 text-xl tracking-tight"></h2>
-                        <button onclick="handleCloseInput()" class="text-slate-300 text-3xl font-light hover:text-slate-500 transition-colors">✕</button>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
-                                <textarea id="m_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모"></textarea>
-                            </div>
-                            <div class="bg-orange-50/40 p-4 rounded-2xl border border-orange-100">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[12px] font-bold">kg</span></div>
-                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">✨ 성공</span><input type="checkbox" id="toilet_val" class="w-6 h-6 accent-sky-400 cursor-pointer"></div>
-                                </div>
-                                <div class="flex items-center border-t border-orange-200/30 pt-3"><span class="font-bold text-orange-800 text-sm">👟 걸음수</span><div class="ml-auto flex items-center gap-2"><input type="number" id="walk_val" class="sugar-input !w-[90px]" placeholder="0"></div></div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span><input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
-                                <textarea id="l_memo" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
-                            </div>
-                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
-                                <textarea id="d_memo" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="memo_val" class="memo-area h-[60px]" placeholder="특이사항 기록"></textarea></div>
-                    </div>
-                </div>
-            </section>
+function doPost(e) {
+  const scriptProps = PropertiesService.getScriptProperties();
+  let data;
+  
+  try {
+    data = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return createJsonResponse({ result: "error", message: "JSON_PARSE_ERROR: " + err.toString() });
+  }
 
-            <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
-                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex gap-2">
-                            <button onclick="setChartType('sugar')" id="chart-btn-sugar" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-[13px] font-bold shadow-md transition">혈당 추이</button>
-                            <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[13px] font-bold transition">체중 변화</button>
-                        </div>
-                        <div id="chart-legend-container" class="flex gap-3 text-[11px] font-bold text-slate-500"></div>
-                    </div>
-                    <div class="w-full h-[400px] relative"><canvas id="mainChart"></canvas></div>
-                </div>
-            </section>
+  if (data.type === "settings") {
+    scriptProps.setProperty(SCHOOL_KEY, JSON.stringify(data.schoolInfo));
+    return createJsonResponse({ result: "success" });
+  }
+  
+  if (data.type === "analyze") {
+    return runGeminiAnalysis(data.prompt, data.dataStr);
+  }
+  
+  if (data.date) {
+    const currentRecordsStr = scriptProps.getProperty(DATA_KEY);
+    let records = currentRecordsStr ? JSON.parse(currentRecordsStr) : {};
+    records[data.date] = data;
+    scriptProps.setProperty(DATA_KEY, JSON.stringify(records));
+    return createJsonResponse({ result: "success" });
+  }
+  
+  return createJsonResponse({ result: "error", message: "UNKNOWN_ACTION_TYPE" });
+}
 
-            <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto text-center">
-                <div class="bg-white rounded-[2.5rem] border border-slate-200 p-6 md:p-10 shadow-sm mt-2">
-                    <div class="flex items-center justify-between mb-8"><h2 class="text-xl font-black text-slate-800">🧠 AI 건강 분석</h2><button onclick="runAIAnalysis('general')" id="analysis-btn" class="bg-sky-500 text-white px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-lg transition">📊 전체 리포트</button></div>
-                    <div class="bg-slate-50 rounded-3xl p-4 mb-8 border border-slate-200">
-                        <div class="flex gap-2">
-                            <textarea id="ai-question-input" class="flex-grow bg-white border border-slate-200 rounded-2xl p-4 text-sm outline-none resize-none shadow-inner" rows="2" placeholder="혈당 관리나 기록 데이터에 대해 궁금한 점을 물어보세요."></textarea>
-                            <button onclick="runAIAnalysis('question')" id="ask-btn" class="bg-slate-800 text-white w-14 rounded-2xl flex items-center justify-center hover:bg-slate-900 transition">🔍</button>
-                        </div>
-                    </div>
-                    <div id="analysis-loading" class="hidden py-16"><div class="loader mb-4"></div><p class="text-sky-600 font-bold">AI가 데이터를 분석 중입니다...</p></div>
-                    <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner overflow-hidden leading-relaxed"><div id="analysis-result-content" class="text-slate-700 whitespace-pre-wrap"></div></div>
-                </div>
-            </section>
-        </main>
+function createJsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
-        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-md bg-white/95 backdrop-blur-xl border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
-            <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-2xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
-            <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
-            <button onclick="switchView('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">💡</span><span class="text-[10px] font-bold">분석</span></button>
-        </nav>
-    </div>
+/**
+ * [수정] 사용 가능한 제미나이 모델을 유동적으로 찾는 함수
+ */
+function getAvailableModel() {
+  const listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + API_KEY;
+  try {
+    const response = UrlFetchApp.fetch(listUrl, { method: "get", muteHttpExceptions: true });
+    const resText = response.getContentText();
+    const data = JSON.parse(resText);
+    
+    if (data.models && data.models.length > 0) {
+      // 1. generateContent를 지원하는 모델 필터링
+      const validModels = data.models.filter(m => m.supportedGenerationMethods.includes("generateContent"));
+      // 2. 가장 안정적인 1.5 flash 모델 우선 선택, 없으면 첫 번째 가용 모델
+      const bestFit = validModels.find(m => m.name.includes("gemini-1.5-flash")) || validModels[0];
+      return bestFit.name;
+    }
+  } catch (e) {
+    console.error("Model discovery failed: " + e);
+  }
+  return "models/gemini-1.5-flash"; // 최후의 보루
+}
 
-    <div id="overlay" class="overlay" onclick="closeModal()"></div>
-    <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">확인</button></div>
+function runGeminiAnalysis(userPrompt, historyData) {
+  const modelName = getAvailableModel();
+  const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${API_KEY}`;
+  
+  const payload = {
+    contents: [{ parts: [{ text: `사용자 질문: ${userPrompt}\n\n최근 기록:\n${historyData}` }] }],
+    systemInstruction: { parts: [{ text: "당신은 건강 전문가입니다. 혈당(아침 100이하, 식후 180이하 목표) 데이터를 기반으로 친절하게 분석하세요." }] }
+  };
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec"; 
-        let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar';
-
-        Chart.register(ChartDataLabels);
-
-        window.onload = async () => { 
-            const local = localStorage.getItem('health_records_v6');
-            if(local) { records = JSON.parse(local); renderCalendar(); }
-            if (isValidUrl()) await syncWithCloud(); 
-        };
-
-        function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
-
-        async function syncWithCloud() {
-            if (isSyncing || !isValidUrl()) return; 
-            isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
-            try { 
-                const response = await fetch(SCRIPT_URL); 
-                const data = await response.json(); 
-                if (data && data.records) { 
-                    records = data.records;
-                    localStorage.setItem('health_records_v6', JSON.stringify(records)); 
-                    renderCalendar(); 
-                }
-            } catch (e) { console.error("Cloud Sync Failed", e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
-        }
-
-        async function handleSave() {
-            if (!selectedDateStr) return;
-            const record = { 
-                date: selectedDateStr, 
-                m_val: document.getElementById('m_val').value, 
-                m_memo: document.getElementById('m_memo').value, 
-                l_val: document.getElementById('l_val').value, 
-                l_memo: document.getElementById('l_memo').value, 
-                d_val: document.getElementById('d_val').value, 
-                d_memo: document.getElementById('d_memo').value, 
-                memo: document.getElementById('memo_val').value, 
-                weight: document.getElementById('weight_val').value, 
-                walk: document.getElementById('walk_val').value, 
-                toilet: document.getElementById('toilet_val').checked 
-            };
-            records[selectedDateStr] = record; 
-            localStorage.setItem('health_records_v6', JSON.stringify(records));
-            if (isValidUrl()) {
-                try {
-                    await fetch(SCRIPT_URL, { 
-                        method: "POST", 
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(record) 
-                    }); 
-                } catch (e) { console.error("Save failed", e); }
-            }
-        }
-
-        async function handleCloseInput() { await handleSave(); switchView('calendar'); }
-
-        async function runAIAnalysis(mode) {
-            const btn = document.getElementById('analysis-btn'), loading = document.getElementById('analysis-loading'), container = document.getElementById('analysis-result-container'), content = document.getElementById('analysis-result-content'), qInput = document.getElementById('ai-question-input');
-            if (Object.keys(records).length === 0) { showMessageBox("데이터가 부족합니다."); return; }
-            btn.disabled = true; loading.classList.remove('hidden'); container.classList.add('hidden');
-            const summary = Object.entries(records).sort((a,b)=>a[0].localeCompare(b[0])).slice(-15).map(([d,r])=>`${d}:혈당(${r.m_val||'-'}/${r.l_val||'-'}/${r.d_val||'-'}),체중(${r.weight||'-'})`).join('\n');
-            try {
-                const promptVal = (mode === 'question' && qInput && qInput.value.trim()) ? qInput.value : '최근 건강 분석 리포트';
-                const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "analyze", prompt: promptVal, dataStr: summary }) });
-                const result = await res.json();
-                if (result.answer) {
-                    content.innerHTML = result.answer.replace(/\*\*(.*?)\*\*/g, '<b class="text-sky-600 font-bold">$1</b>').replace(/\n/g, '<br>');
-                    loading.classList.add('hidden'); container.classList.remove('hidden');
-                    if(mode === 'question') qInput.value = '';
-                } else throw new Error("AI 응답 실패");
-            } catch (e) { showMessageBox("분석 실패: " + e.message); loading.classList.add('hidden'); } finally { btn.disabled = false; }
-        }
-
-        function renderCalendar() {
-            const body = document.getElementById('calendar-body'); body.innerHTML = '';
-            const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
-            document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
-            const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
-            for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/40'}));
-            for (let d = 1; d <= last; d++) {
-                const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const cell = Object.assign(document.createElement('div'), {className:'day-cell flex flex-col'});
-                const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
-                let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
-                let isToilet = r && (r.toilet === true || String(r.toilet).toUpperCase() === "TRUE");
-                let header = `<div class="flex justify-between items-center w-full mb-1 h-6">
-                                <div class="w-7 h-7 flex items-center justify-center ${isToilet ? 'bg-sky-100 rounded-full text-sky-600' : ''}">
-                                    <span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span>
-                                </div>
-                                ${(r && r.walk) ? `<span class="text-[10px] md:text-[12px] text-slate-400 font-extrabold tracking-tighter">${r.walk}보</span>` : ''}
-                             </div>`;
-                let bodyContent = `<div class="flex-grow flex flex-col gap-0.5 text-[11px] md:text-[12px] font-bold">`;
-                if (r) {
-                    const chk = (v, t) => parseInt(v) <= t ? 'text-sky-500' : 'text-rose-500';
-                    if(r.m_val) bodyContent += `<div class="truncate">🌥️ <span class="${chk(r.m_val, 100)}">${r.m_val}</span></div>`;
-                    if(r.l_val) bodyContent += `<div class="truncate">☀️ <span class="${chk(r.l_val, 180)}">${r.l_val}</span></div>`;
-                    if(r.d_val) bodyContent += `<div class="truncate">🌙 <span class="${chk(r.d_val, 180)}">${r.d_val}</span></div>`;
-                }
-                bodyContent += `</div>`;
-                let footer = (r && r.weight && parseFloat(r.weight) > 0) ? 
-                    `<div class="mt-auto border-t border-slate-100 pt-1 text-[11px] md:text-[12px] text-slate-400 font-bold truncate">⚖️ ${r.weight}<span class="hidden md:inline">kg</span></div>` : 
-                    `<div class="mt-auto h-[18px]"></div>`;
-                cell.innerHTML = header + bodyContent + footer;
-                cell.onclick = () => { 
-                    selectedDateStr = dateKey; 
-                    const rec = records[dateKey]||{}; 
-                    document.getElementById('input-date-title').innerText = `${dateKey}`;
-                    ['m_val','m_memo','l_val','l_memo','d_val','d_memo','weight','walk','memo'].forEach(k => {
-                        const id = k.includes('val') || k === 'memo' ? k : (k === 'weight' ? 'weight_val' : (k === 'walk' ? 'walk_val' : k));
-                        const el = document.getElementById(id);
-                        if(el) { el.value = rec[k] || ''; if(k.includes('val')) validateInputColor(el, k === 'm_val' ? 100 : 180); }
-                    });
-                    document.getElementById('toilet_val').checked = (rec.toilet === true || String(rec.toilet).toUpperCase() === "TRUE");
-                    switchView('input');
-                };
-                body.appendChild(cell);
-            }
-        }
-
-        function switchView(n) {
-            activeView = n; 
-            document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); 
-            document.getElementById(`view-${n}`).classList.remove('hidden');
-            document.getElementById('main-header').style.display = (n === 'input' || n === 'analysis') ? 'none' : 'block';
-            document.querySelectorAll('#bottom-nav button').forEach(b => { 
-                if (b.id === `nav-${n}`) { b.classList.replace('tab-inactive', 'tab-active'); } 
-                else { b.classList.replace('tab-active', 'tab-inactive'); }
-            });
-            if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50);
-            window.scrollTo(0,0);
-        }
-
-        function validateInputColor(el, t) { const val = parseInt(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
-        function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); }
-        function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
-        function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
-        
-        async function fetchMealData() { showMessageBox("시트 식단 데이터를 기반으로 관리합니다."); }
-
-        function updateChart() {
-            const canvas = document.getElementById('mainChart'); if(!canvas) return;
-            const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
-            const labels = Array.from({length:lastDay}, (_,i)=>i+1);
-            const getVal = (day, key) => { 
-                const dk = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const val = records[dk]?.[key] ? parseFloat(records[dk][key]) : null;
-                return (val === 0) ? null : val;
-            };
-            const legendContainer = document.getElementById('chart-legend-container');
-            legendContainer.innerHTML = '';
-            const addLegend = (label, color) => {
-                legendContainer.innerHTML += `<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color:${color}"></span>${label}</div>`;
-            };
-            let datasets = [];
-            let annotations = {};
-            if(currentChartType === 'sugar') {
-                datasets = [
-                    { label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.4, spanGaps: true, datalabels: { display: false } },
-                    { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.4, spanGaps: true, datalabels: { display: false } },
-                    { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.4, spanGaps: true, datalabels: { display: false } }
-                ];
-                addLegend('아침', '#7dd3fc'); addLegend('점심', '#fb923c'); addLegend('저녁', '#1e3a8a');
-                annotations = {
-                    line1: { type: 'line', yMin: 100, yMax: 100, borderColor: '#555', borderWidth: 1.5, label: { display: false } },
-                    line2: { type: 'line', yMin: 180, yMax: 180, borderColor: '#555', borderWidth: 1.5, label: { display: false } }
-                };
-            } else {
-                datasets = [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'weight')), borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.4, spanGaps: true, datalabels: { display: true, align: 'top', font: { weight: 'bold', size: 10 } } }];
-                addLegend('체중(kg)', '#0ea5e9');
-            }
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(canvas.getContext('2d'), {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { min: currentChartType === 'weight' ? 45 : undefined, max: currentChartType === 'weight' ? 65 : undefined, grid: { color: '#f1f5f9' } } },
-                    plugins: { legend: { display: false }, datalabels: { color: '#64748b' }, annotation: { annotations } }
-                }
-            });
-        }
-        function setChartType(t) { 
-            currentChartType = t; 
-            const btnS = document.getElementById('chart-btn-sugar'), btnW = document.getElementById('chart-btn-weight');
-            if(t==='sugar'){ btnS.classList.replace('bg-slate-100','bg-sky-500'); btnS.classList.replace('text-slate-500','text-white'); btnW.classList.replace('bg-sky-500','bg-slate-100'); btnW.classList.replace('text-white','text-slate-500'); }
-            else { btnW.classList.replace('bg-slate-100','bg-sky-500'); btnW.classList.replace('text-slate-500','text-white'); btnS.classList.replace('bg-sky-500','bg-slate-100'); btnS.classList.replace('text-white','text-slate-500'); }
-            updateChart(); 
-        }
-    </script>
-</body>
-</html>
+  try {
+    const res = UrlFetchApp.fetch(url, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    
+    const resCode = res.getResponseCode();
+    const resText = res.getContentText();
+    const result = JSON.parse(resText);
+    
+    if (resCode === 200 && result.candidates && result.candidates[0] && result.candidates[0].content) {
+      return createJsonResponse({ answer: result.candidates[0].content.parts[0].text });
+    } else {
+      // 상세 에러 정보 반환
+      const errorMsg = result.error ? `[${result.error.status}] ${result.error.message}` : "UNKNOWN_API_ERROR";
+      return createJsonResponse({ 
+        result: "error", 
+        message: `API_RESPONSE_CODE_${resCode}: ${errorMsg}`,
+        debug: resText.substring(0, 200)
+      });
+    }
+  } catch (e) {
+    return createJsonResponse({ result: "error", message: "SERVER_FETCH_EXCEPTION: " + e.toString() });
+  }
+}

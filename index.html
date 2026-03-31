@@ -1,112 +1,81 @@
 /**
- * 혈당 및 체중 매니저 Pro - 통합 백엔드 (모델 자동 탐색 및 상세 에러 코드 반환)
+ * 혈당 및 체중 매니저 Pro - 스프레드시트 연동 최종본
+ * 스프레드시트 컬럼 인덱스 (image_3cd69d.png 기준):
+ * 0:A(날짜), 1:B(아침혈당), 2:C(아침메모), 3:D(점심식단), 4:E(점심혈당), 5:F(저녁식단), 6:G(저녁혈당), 7:H(기타메모), 8:I(체중), 9:J(걸음), 10:K(성공)
  */
 
-const API_KEY = "AIzaSyBsOtIZo9_V0b-z0mZpjdBVAMDqLCXUeb4"; 
-const DATA_KEY = 'health_records_v6';
-const SCHOOL_KEY = 'health_school_v6';
-
 function doGet() {
-  const scriptProps = PropertiesService.getScriptProperties();
-  const recordsStr = scriptProps.getProperty(DATA_KEY);
-  const records = recordsStr ? JSON.parse(recordsStr) : {};
-  const schoolInfo = JSON.parse(scriptProps.getProperty(SCHOOL_KEY) || 'null');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = sheet.getDataRange().getValues();
+  const records = {};
   
-  return ContentService.createTextOutput(JSON.stringify({ records, schoolInfo }))
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    
+    try {
+      let dateObj = row[0] instanceof Date ? row[0] : new Date(row[0]);
+      // 날짜 오차 보정을 위해 12시간을 더한 뒤 yyyy-MM-dd로 변환
+      const dateKey = Utilities.formatDate(new Date(dateObj.getTime() + (12 * 60 * 60 * 1000)), "GMT+9", "yyyy-MM-dd");
+      
+      records[dateKey] = {
+        date: dateKey,
+        morning_sugar: row[1] || "",      // B열: 아침 혈당
+        morning_memo: row[2] || "",       // C열: 아침 메모
+        lunch_menu: row[3] || "",         // D열: 점심 식단 (메뉴)
+        lunch_sugar: row[4] || "",        // E열: 점심 혈당
+        dinner_menu: row[5] || "",        // F열: 저녁 식단 (메뉴)
+        dinner_sugar: row[6] || "",       // G열: 저녁 혈당
+        extra_memo: row[7] || "",         // H열: 기타 메모
+        body_weight: row[8] || "",        // I열: 체중
+        step_count: row[9] || "",         // J열: 걸음수
+        is_success: String(row[10]).toUpperCase() === "TRUE" || row[10] === true // K열: 성공
+      };
+    } catch (e) { console.error("데이터 읽기 오류: " + e.toString()); }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ records: records }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  const scriptProps = PropertiesService.getScriptProperties();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   let data;
-  
   try {
     data = JSON.parse(e.postData.contents);
   } catch (err) {
-    return createJsonResponse({ result: "error", message: "JSON_PARSE_ERROR: " + err.toString() });
+    return ContentService.createTextOutput(JSON.stringify({ result: "error" })).setMimeType(ContentService.MimeType.JSON);
   }
 
-  if (data.type === "settings") {
-    scriptProps.setProperty(SCHOOL_KEY, JSON.stringify(data.schoolInfo));
-    return createJsonResponse({ result: "success" });
-  }
-  
-  if (data.type === "analyze") {
-    return runGeminiAnalysis(data.prompt, data.dataStr);
-  }
-  
-  if (data.date) {
-    const currentRecordsStr = scriptProps.getProperty(DATA_KEY);
-    let records = currentRecordsStr ? JSON.parse(currentRecordsStr) : {};
-    records[data.date] = data;
-    scriptProps.setProperty(DATA_KEY, JSON.stringify(records));
-    return createJsonResponse({ result: "success" });
-  }
-  
-  return createJsonResponse({ result: "error", message: "UNKNOWN_ACTION_TYPE" });
-}
+  const dateStr = data.date;
+  const values = sheet.getDataRange().getValues();
+  let targetRow = -1;
 
-function createJsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-/**
- * [수정] 사용 가능한 제미나이 모델을 유동적으로 찾는 함수
- */
-function getAvailableModel() {
-  const listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + API_KEY;
-  try {
-    const response = UrlFetchApp.fetch(listUrl, { method: "get", muteHttpExceptions: true });
-    const resText = response.getContentText();
-    const data = JSON.parse(resText);
-    
-    if (data.models && data.models.length > 0) {
-      // 1. generateContent를 지원하는 모델 필터링
-      const validModels = data.models.filter(m => m.supportedGenerationMethods.includes("generateContent"));
-      // 2. 가장 안정적인 1.5 flash 모델 우선 선택, 없으면 첫 번째 가용 모델
-      const bestFit = validModels.find(m => m.name.includes("gemini-1.5-flash")) || validModels[0];
-      return bestFit.name;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0]) {
+      let rowDate = values[i][0] instanceof Date ? values[i][0] : new Date(values[i][0]);
+      let formattedRowDate = Utilities.formatDate(new Date(rowDate.getTime() + (12 * 60 * 60 * 1000)), "GMT+9", "yyyy-MM-dd");
+      if (formattedRowDate === dateStr) {
+        targetRow = i + 1;
+        break;
+      }
     }
-  } catch (e) {
-    console.error("Model discovery failed: " + e);
   }
-  return "models/gemini-1.5-flash"; // 최후의 보루
-}
 
-function runGeminiAnalysis(userPrompt, historyData) {
-  const modelName = getAvailableModel();
-  const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${API_KEY}`;
-  
-  const payload = {
-    contents: [{ parts: [{ text: `사용자 질문: ${userPrompt}\n\n최근 기록:\n${historyData}` }] }],
-    systemInstruction: { parts: [{ text: "당신은 건강 전문가입니다. 혈당(아침 100이하, 식후 180이하 목표) 데이터를 기반으로 친절하게 분석하세요." }] }
-  };
+  // 저장할 데이터 배열 (A~K 컬럼 순서 그대로 유지)
+  const rowData = [
+    dateStr,
+    data.morning_sugar, data.morning_memo,
+    data.lunch_menu, data.lunch_sugar,
+    data.dinner_menu, data.dinner_sugar,
+    data.extra_memo, data.body_weight, data.step_count, data.is_success
+  ];
 
-  try {
-    const res = UrlFetchApp.fetch(url, {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    });
-    
-    const resCode = res.getResponseCode();
-    const resText = res.getContentText();
-    const result = JSON.parse(resText);
-    
-    if (resCode === 200 && result.candidates && result.candidates[0] && result.candidates[0].content) {
-      return createJsonResponse({ answer: result.candidates[0].content.parts[0].text });
-    } else {
-      // 상세 에러 정보 반환
-      const errorMsg = result.error ? `[${result.error.status}] ${result.error.message}` : "UNKNOWN_API_ERROR";
-      return createJsonResponse({ 
-        result: "error", 
-        message: `API_RESPONSE_CODE_${resCode}: ${errorMsg}`,
-        debug: resText.substring(0, 200)
-      });
-    }
-  } catch (e) {
-    return createJsonResponse({ result: "error", message: "SERVER_FETCH_EXCEPTION: " + e.toString() });
+  if (targetRow > 0) {
+    sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
   }
+
+  return ContentService.createTextOutput(JSON.stringify({ result: "success" })).setMimeType(ContentService.MimeType.JSON);
 }

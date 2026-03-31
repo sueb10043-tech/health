@@ -43,7 +43,6 @@
         </header>
 
         <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-10">
-            <!-- 달력 뷰 -->
             <section id="view-calendar" class="view-section">
                 <div class="max-w-4xl mx-auto border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white">
                     <div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] md:text-sm py-3 text-slate-500 uppercase tracking-wider">
@@ -53,7 +52,6 @@
                 </div>
             </section>
 
-            <!-- 입력 뷰 -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
                     <div class="flex justify-between items-center mb-6 border-b pb-3">
@@ -64,32 +62,31 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
-                                <textarea id="m_memo" class="memo-area h-[40px] pt-2 pb-[6px] px-[10px]" placeholder="아침 메모" spellcheck="false"></textarea>
+                                <textarea id="m_memo" class="memo-area h-[40px] pt-2 pb-[6px] px-[10px]" placeholder="아침 메모"></textarea>
                             </div>
                             <div class="bg-orange-50/40 px-3 py-2 rounded-2xl border border-orange-100 flex flex-col gap-2.5">
                                 <div class="flex items-center">
-                                    <div class="flex items-center"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">⚖️ 체중</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0" spellcheck="false"><span class="text-[11px] font-bold text-orange-800/60">kg</span></div></div>
+                                    <div class="flex items-center"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">⚖️ 체중</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[11px] font-bold text-orange-800/60">kg</span></div></div>
                                     <div class="ml-auto flex items-center"><span class="w-[50px] font-bold text-orange-800 text-sm whitespace-nowrap">✨ 성공</span><div style="width: 10px;"></div><input type="checkbox" id="toilet_val" class="w-5 h-5 accent-sky-400 cursor-pointer"></div>
                                 </div>
-                                <div class="flex items-center border-t border-orange-200/30 pt-2"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">👟 걸음</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" id="walk_val" class="sugar-input !w-[75px]" placeholder="0" spellcheck="false"><span class="text-[11px] font-bold text-orange-800/60">보</span></div></div>
+                                <div class="flex items-center border-t border-orange-200/30 pt-2"><span class="w-[60px] font-bold text-orange-800 text-sm whitespace-nowrap">👟 걸음</span><div style="width: 15px;"></div><div class="flex items-center gap-1.5"><input type="number" id="walk_val" class="sugar-input !w-[75px]" placeholder="0"><span class="text-[11px] font-bold text-orange-800/60">보</span></div></div>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 혈당</span><div class="flex gap-2 items-center"><button onclick="fetchMealData()" class="bg-white p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button><input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0" spellcheck="false"></div></div>
-                                <textarea id="l_memo" class="memo-area h-32" placeholder="점심 메모" spellcheck="false"></textarea>
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 혈당</span><div class="flex gap-2 items-center"><button onclick="fetchMealData()" class="bg-white p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button><input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div></div>
+                                <textarea id="l_memo" class="memo-area h-32" placeholder="점심 메모"></textarea>
                             </div>
                             <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 혈당</span><input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0" spellcheck="false"></div>
-                                <textarea id="d_memo" class="memo-area h-32" placeholder="저녁 메모" spellcheck="false"></textarea>
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 혈당</span><input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
+                                <textarea id="d_memo" class="memo-area h-32" placeholder="저녁 메모"></textarea>
                             </div>
                         </div>
-                        <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200 pb-6"><label class="block text-xs font-bold text-slate-500 mb-2">📝 기타 메모</label><textarea id="memo_val" class="memo-area h-[60px] py-2" placeholder="기타 특이사항" spellcheck="false"></textarea></div>
+                        <div class="bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-200 pb-6"><label class="block text-xs font-bold text-slate-500 mb-2">📝 기타 메모</label><textarea id="memo_val" class="memo-area h-[60px] py-2" placeholder="기타 특이사항"></textarea></div>
                     </div>
                 </div>
             </section>
 
-            <!-- 차트 뷰 -->
             <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
@@ -103,29 +100,26 @@
                 </div>
             </section>
             
-            <!-- 분석 뷰 -->
             <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto text-center">
                 <div class="bg-white rounded-[2.5rem] border border-slate-200 p-6 md:p-10 shadow-sm mt-2">
                     <div class="flex items-center justify-between mb-8"><h2 class="text-xl font-black text-slate-800">🧠 AI 스마트 분석</h2><button onclick="runAIAnalysis('general')" id="analysis-btn" class="bg-sky-500 text-white px-4 py-2 rounded-xl text-[11px] font-bold">📊 전체 리포트</button></div>
-                    <div class="bg-slate-50 rounded-3xl p-4 mb-8 border border-slate-200 text-left"><div class="flex gap-2"><textarea id="ai-question-input" class="flex-grow bg-white border border-slate-200 rounded-2xl p-4 text-sm outline-none resize-none" rows="2" placeholder="데이터 기반 질문이나 급식 분석 요청" spellcheck="false"></textarea><button onclick="runAIAnalysis('question')" id="ask-btn" class="bg-slate-800 text-white w-14 rounded-2xl flex items-center justify-center">🔍</button></div></div>
+                    <div class="bg-slate-50 rounded-3xl p-4 mb-8 border border-slate-200 text-left"><div class="flex gap-2"><textarea id="ai-question-input" class="flex-grow bg-white border border-slate-200 rounded-2xl p-4 text-sm outline-none resize-none" rows="2" placeholder="데이터 기반 질문이나 급식 분석 요청"></textarea><button onclick="runAIAnalysis('question')" id="ask-btn" class="bg-slate-800 text-white w-14 rounded-2xl flex items-center justify-center">🔍</button></div></div>
                     <div id="analysis-loading" class="hidden py-16"><div class="loader mb-4"></div><p class="text-sky-600 font-black">데이터 분석 중...</p></div>
                     <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner"><div id="analysis-result-content" class="whitespace-pre-wrap"></div></div>
                 </div>
             </section>
 
-            <!-- 설정 뷰 -->
             <section id="view-settings" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
                     <div class="flex justify-between items-center mb-8"><h2 class="text-xl font-bold text-slate-800">⚙️ 학교 설정</h2><button onclick="switchView('calendar')" class="text-slate-300 text-2xl px-2">✕</button></div>
                     <div id="current-school-info" class="p-5 bg-sky-50 text-sky-700 rounded-2xl font-bold mb-6 italic text-center text-sm"><span id="school-name-display">학교 미설정</span></div>
-                    <div class="flex gap-2"><input type="text" id="school-search-input" class="flex-grow border border-slate-200 rounded-2xl px-5 py-3.5 bg-slate-50 outline-none focus:border-sky-300" placeholder="학교명 검색" spellcheck="false"><button onclick="searchSchool()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold active:scale-95 transition">검색</button></div>
+                    <div class="flex gap-2"><input type="text" id="school-search-input" class="flex-grow border border-slate-200 rounded-2xl px-5 py-3.5 bg-slate-50 outline-none focus:border-sky-300" placeholder="학교명 검색"><button onclick="searchSchool()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold active:scale-95 transition">검색</button></div>
                     <div id="school-search-results" class="max-h-64 overflow-y-auto mt-6 space-y-2"></div>
                 </div>
             </section>
         </main>
 
-        <!-- 하단 네비게이션 -->
-        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-md bg-white/90 backdrop-blur-xl border border-slate-200 flex justify-around py-1.5 md:py-4 rounded-[2.5rem] shadow-2xl z-50 transition-all duration-300">
+        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-md bg-white/90 backdrop-blur-xl border border-slate-200 flex justify-around py-1.5 md:py-4 rounded-[2.5rem] shadow-2xl z-50">
             <button onclick="handleAutoSaveBeforeSwitch('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 md:gap-1 tab-active flex-1"><span class="text-xl md:text-2xl">📅</span><span class="text-[9px] md:text-[11px] font-bold">달력</span></button>
             <button onclick="handleAutoSaveBeforeSwitch('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">📈</span><span class="text-[9px] md:text-[11px] font-bold">차트</span></button>
             <button onclick="handleAutoSaveBeforeSwitch('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 md:gap-1 tab-inactive flex-1"><span class="text-xl md:text-2xl">💡</span><span class="text-[9px] md:text-[11px] font-bold">분석</span></button>
@@ -139,10 +133,7 @@
     </div>
 
     <script>
-        // 사용자 고유 설정값 고정
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec"; 
-        const DATA_KEY = 'health_records_v6';
-        const SCHOOL_KEY = 'health_school_v6';
         
         let currentMonth = new Date(), records = {}, schoolInfo = null, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar';
 
@@ -150,44 +141,37 @@
             loadLocalData(); 
             renderCalendar(); 
             displayCurrentSchool(); 
-            await syncWithCloud(); 
+            if (isValidUrl()) await syncWithCloud(); 
         };
+
+        function isValidUrl() {
+            return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com");
+        }
 
         function loadLocalData() { 
             try { 
-                records = JSON.parse(localStorage.getItem(DATA_KEY)) || {}; 
-                schoolInfo = JSON.parse(localStorage.getItem(SCHOOL_KEY)); 
+                records = JSON.parse(localStorage.getItem('health_records_v6')) || {}; 
+                schoolInfo = JSON.parse(localStorage.getItem('health_school_v6')); 
             } catch(e) { records = {}; } 
         }
         
         async function syncWithCloud() {
-            if (isSyncing) return; 
-            isSyncing = true; 
-            const loader = document.getElementById('sync-status');
-            if(loader) loader.classList.remove('hidden');
-            
+            if (isSyncing || !isValidUrl()) return; 
+            isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
             try { 
                 const response = await fetch(SCRIPT_URL); 
                 const data = await response.json(); 
-                
-                // 데이터 보호 및 병합 로직
                 if (data.records) { 
-                    const localRecords = JSON.parse(localStorage.getItem(DATA_KEY)) || {};
-                    // 로컬 기록과 서버 기록 병합 (서버 기록을 최신으로 간주하되 로컬 데이터 유실 방지)
-                    records = Object.assign(localRecords, data.records); 
-                    localStorage.setItem(DATA_KEY, JSON.stringify(records)); 
+                    records = data.records; 
+                    localStorage.setItem('health_records_v6', JSON.stringify(records)); 
+                    renderCalendar(); 
                 }
-
                 if (data.schoolInfo) { 
                     schoolInfo = data.schoolInfo; 
-                    localStorage.setItem(SCHOOL_KEY, JSON.stringify(schoolInfo)); 
+                    localStorage.setItem('health_school_v6', JSON.stringify(schoolInfo)); 
                     displayCurrentSchool(); 
                 }
-                renderCalendar();
-            } catch (e) { console.error("Sync Error:", e); } finally { 
-                isSyncing = false; 
-                if(loader) loader.classList.add('hidden'); 
-            }
+            } catch (e) { console.error("Sync Error:", e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
         }
 
         async function handleCloseInput() { await handleSave(); switchView('calendar'); }
@@ -209,37 +193,28 @@
                 walk: document.getElementById('walk_val').value, 
                 toilet: document.getElementById('toilet_val').checked 
             };
-            
-            // 로컬 선 저장
             records[selectedDateStr] = record; 
-            localStorage.setItem(DATA_KEY, JSON.stringify(records));
+            localStorage.setItem('health_records_v6', JSON.stringify(records));
             
-            // 서버 전송 (no-cors)
-            try { 
-                await fetch(SCRIPT_URL, { 
-                    method: "POST", 
-                    mode: "no-cors", 
-                    body: JSON.stringify(record) 
-                }); 
-            } catch (e) { console.error("Save Error:", e); }
+            if (isValidUrl()) {
+                try { 
+                    fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(record) }); 
+                } catch (e) { console.error("Save Error:", e); }
+            }
         }
 
         async function runAIAnalysis(mode) {
+            if (!isValidUrl()) {
+                showMessageBox("GAS URL이 설정되지 않아 AI 분석을 사용할 수 없습니다.");
+                return;
+            }
             const btnA = document.getElementById('analysis-btn'), btnB = document.getElementById('ask-btn'), loading = document.getElementById('analysis-loading'), container = document.getElementById('analysis-result-container'), content = document.getElementById('analysis-result-content'), qInput = document.getElementById('ai-question-input');
             if (Object.keys(records).length === 0) { showMessageBox("기록된 데이터가 부족합니다."); return; }
             btnA.disabled = btnB.disabled = true; loading.classList.remove('hidden'); container.classList.add('hidden');
             
-            const dataStr = Object.entries(records)
-                .sort((a,b)=>a[0].localeCompare(b[0]))
-                .slice(-30)
-                .map(([d,r])=> `${d}: 혈당(아침:${r.m_val||0}/점심:${r.l_val||0}/저녁:${r.d_val||0}), 체중:${r.weight||0}, 걸음:${r.walk||0}, 성공:${r.toilet?'Y':'N'}, 메모:${r.l_memo||''}/${r.d_memo||''}`)
-                .join('\n');
-
+            const dataStr = Object.entries(records).sort((a,b)=>a[0].localeCompare(b[0])).slice(-30).map(([d,r])=>`${d}: 혈당(${r.m_val}/${r.l_val}/${r.d_val}), 체중(${r.weight}), 걸음(${r.walk}), 성공(${r.toilet?'Y':'N'})`).join('\n');
             try {
-                const res = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ type: "analyze", prompt: mode==='question' ? qInput.value : '기록 분석 리포트', dataStr: dataStr }) 
-                });
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ type: "analyze", prompt: mode==='question' ? qInput.value : '기록 정밀 분석 리포트', dataStr: dataStr }) });
                 const result = await res.json();
                 content.innerHTML = result.answer.replace(/^### (.*$)/gim, '<h3>$1</h3>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
                 loading.classList.add('hidden'); container.classList.remove('hidden');
@@ -249,13 +224,13 @@
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
-            document.getElementById('view-title').innerText = yr + "년 " + (mo + 1) + "월";
+            document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
             const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
             const isMobile = window.innerWidth < 640;
             
             for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/50'}));
             for (let d = 1; d <= last; d++) {
-                const dateKey = yr + "-" + String(mo+1).padStart(2,'0') + "-" + String(d).padStart(2,'0');
+                const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const cell = Object.assign(document.createElement('div'), {className:'day-cell'});
                 const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 let dayColorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
@@ -279,7 +254,7 @@
                         else cellContent += `<div class="mt-auto"></div>`;
                         cellContent += '</div>';
                     } else {
-                        // PC 버전 레이아웃: 높이 17px로 정밀 조정
+                        // PC 버전 레이아웃: 항목 높이를 요청하신 대로 17px로 정밀 조정
                         cellContent += `<div class="text-[11px] font-bold flex flex-col flex-grow mt-1 gap-1">`;
                         cellContent += `<div style="height: 17px;" class="flex items-center">${r.m_val ? `🌥️ <span class="${chk(r.m_val, 100)} ml-1">${r.m_val}</span>` : ''}</div>`;
                         cellContent += `<div style="height: 17px;" class="flex items-center">${r.l_val ? `☀️ <span class="${chk(r.l_val, 180)} ml-1">${r.l_val}</span>` : ''}</div>`;
@@ -294,7 +269,7 @@
                     selectedDateStr = dateKey; 
                     const rec = records[dateKey]||{}; 
                     const days = ['일', '월', '화', '수', '목', '금', '토'];
-                    document.getElementById('input-date-title').innerText = dateKey + "(" + days[dayOfWeek] + ")";
+                    document.getElementById('input-date-title').innerText = `${dateKey}(${days[dayOfWeek]})`;
                     ['m_val','m_memo','l_val','l_memo','d_val','d_memo','weight_val','walk_val','memo_val'].forEach(id => {
                         const el = document.getElementById(id);
                         if(el) {
@@ -312,11 +287,11 @@
 
         function switchView(n) {
             activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); 
-            document.getElementById("view-" + n).classList.remove('hidden');
-            const h = document.getElementById('main-header');
+            document.getElementById(`view-${n}`).classList.remove('hidden');
+            const h = document.getElementById('main-header'), nav = document.getElementById('bottom-nav');
             if (n === 'input' || n === 'analysis') { h.style.display = 'none'; } else { h.style.display = 'block'; }
             document.querySelectorAll('#bottom-nav button').forEach(b => { 
-                if (b.id === "nav-" + n) { b.classList.add('tab-active'); b.classList.remove('tab-inactive'); } 
+                if (b.id === `nav-${n}`) { b.classList.add('tab-active'); b.classList.remove('tab-inactive'); } 
                 else { b.classList.remove('tab-active'); b.classList.add('tab-inactive'); } 
             });
             if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50); window.scrollTo(0,0);
@@ -330,7 +305,7 @@
         async function searchSchool() {
             const q = document.getElementById('school-search-input').value; if(!q) return;
             try {
-                const res = await fetch("https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=" + encodeURIComponent(q));
+                const res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(q)}`);
                 const data = await res.json();
                 if(data.schoolInfo) document.getElementById('school-search-results').innerHTML = data.schoolInfo[1].row.map(s => `<div onclick="selectSchool('${s.ATPT_OFCDC_SC_CODE}','${s.SD_SCHUL_CODE}','${s.SCHUL_NM}')" class="p-4 border bg-white hover:bg-sky-50 cursor-pointer text-sm font-bold rounded-2xl">${s.SCHUL_NM}</div>`).join('');
             } catch (e) { console.error(e); }
@@ -338,23 +313,27 @@
 
         async function selectSchool(atpt, schul, name) {
             schoolInfo = { ATPT_OFCDC_SC_CODE: atpt, SD_SCHUL_CODE: schul, SCHUL_NM: name };
-            localStorage.setItem(SCHOOL_KEY, JSON.stringify(schoolInfo));
+            localStorage.setItem('health_school_v6', JSON.stringify(schoolInfo));
             displayCurrentSchool();
-            try { await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "settings", schoolInfo }) }); } catch(e) {}
-            showMessageBox(name + " 설정 성공");
+            if (isValidUrl()) {
+                try { await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "settings", schoolInfo }) }); } catch(e) {}
+            }
+            showMessageBox(`${name} 설정 성공`);
         }
-        function displayCurrentSchool() { document.getElementById('school-name-display').innerText = schoolInfo ? "✅ 설정: " + schoolInfo.SCHUL_NM : "❌ 미설정"; }
+        function displayCurrentSchool() { document.getElementById('school-name-display').innerText = schoolInfo ? `✅ 설정: ${schoolInfo.SCHUL_NM}` : "❌ 미설정"; }
         
         async function fetchMealData() {
-            if(!schoolInfo || !selectedDateStr) { showMessageBox("학교 설정을 먼저 해주세요."); return; }
+            if(!schoolInfo || !selectedDateStr) { showMessageBox("학교 설정을 먼저 해주세요."); switchView('settings'); return; }
             try {
-                const res = await fetch("https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=" + schoolInfo.ATPT_OFCDC_SC_CODE + "&SD_SCHUL_CODE=" + schoolInfo.SD_SCHUL_CODE + "&MLSV_YMD=" + selectedDateStr.replace(/-/g,''));
+                const res = await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${schoolInfo.ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${schoolInfo.SD_SCHUL_CODE}&MLSV_YMD=${selectedDateStr.replace(/-/g,'')}`);
                 const data = await res.json();
                 if(data.mealServiceDietInfo) {
                     const row = data.mealServiceDietInfo[1].row.find(r => r.MMEAL_SC_NM.includes('중식'));
                     if(row) document.getElementById('l_memo').value = row.DDISH_NM.replace(/<br\/>/g, '\n').replace(/\([^)]*\)/g, '').replace(/[*. ]/g, '').trim();
+                } else {
+                    showMessageBox("해당 날짜의 급식 정보가 없습니다.");
                 }
-            } catch(e) { }
+            } catch(e) { console.error(e); }
         }
 
         function updateChart() {
@@ -363,19 +342,19 @@
             const last = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
             const labels = Array.from({length:last}, (_,i)=>i+1);
             const getVal = (day, key) => { 
-                const dateKey = currentMonth.getFullYear() + "-" + String(currentMonth.getMonth()+1).padStart(2,'0') + "-" + String(day).padStart(2,'0');
+                const dateKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
                 return records[dateKey]?.[key] ? parseFloat(records[dateKey][key]) : null;
             };
             
             let datasets = [];
             if(currentChartType === 'sugar') {
                 datasets = [
-                    { label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', tension: 0.3, fill: false },
-                    { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', tension: 0.3, fill: false },
-                    { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', tension: 0.3, fill: false }
+                    { label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', tension: 0.3 },
+                    { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', tension: 0.3 },
+                    { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', tension: 0.3 }
                 ];
             } else {
-                datasets = [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'weight')), borderColor: '#0ea5e9', tension: 0.3, fill: false }];
+                datasets = [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'weight')), borderColor: '#0ea5e9', tension: 0.3 }];
             }
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, spanGaps: true } });

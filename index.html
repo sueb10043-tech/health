@@ -7,15 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; }
         .day-cell { min-height: 130px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; }
         @media (max-width: 640px) { .day-cell { min-height: 105px; max-height: 105px; padding: 4px; } }
+        .day-cell:hover { background-color: #f1f5f9; }
         .sugar-input { width: 80px; padding: 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 700; font-size: 15px; outline: none; height: 38px !important; }
-        .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.6; font-size: 15px; outline: none; background-color: #fff; resize: none; }
+        .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.6; font-size: 14px; outline: none; background-color: #fff; resize: none; }
         .tab-active { color: #0ea5e9; font-weight: 800; position: relative; }
+        .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
         .tab-inactive { color: #94a3b8; }
         .custom-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); z-index: 10000; display: none; width: 90%; max-width: 500px; }
         .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; z-index: 9000; backdrop-filter: blur(4px); }
@@ -25,23 +27,19 @@
 </head>
 <body>
     <div id="app-container" class="main-wrapper">
-        <!-- Header -->
         <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
-            <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full">
+            <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
                 <div class="flex items-center gap-6">
                     <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〈</button>
                     <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
                     <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〉</button>
                 </div>
-                <button onclick="switchView('settings')" class="absolute right-6 text-slate-400 p-2 hover:text-slate-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-                <div id="sync-status" class="absolute right-16 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
+                <div id="sync-status" class="absolute right-6 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
             </div>
         </header>
 
         <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-24">
-            <!-- Calendar View -->
+            <!-- 달력 뷰 -->
             <section id="view-calendar" class="view-section">
                 <div class="max-w-4xl mx-auto border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white">
                     <div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] py-3 text-slate-500 uppercase tracking-widest">
@@ -51,7 +49,7 @@
                 </div>
             </section>
 
-            <!-- Input View -->
+            <!-- 입력 뷰 -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
                     <div class="flex justify-between items-center mb-6 border-b pb-3">
@@ -60,140 +58,94 @@
                     </div>
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Blood Sugar: Morning -->
+                            <!-- 아침 -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="m_val" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
-                                <textarea id="m_memo" class="memo-area h-[44px] pt-2" placeholder="아침 컨디션이나 식단 메모"></textarea>
+                                <textarea id="m_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모"></textarea>
                             </div>
-                            <!-- Weight & Success & Steps -->
+                            <!-- 체중 및 성공 -->
                             <div class="bg-orange-50/40 p-4 rounded-2xl border border-orange-100">
                                 <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[11px] text-orange-800/60 font-bold">kg</span></div>
+                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="weight_val" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[11px] font-bold">kg</span></div>
                                     <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">✨ 성공</span><input type="checkbox" id="toilet_val" class="w-6 h-6 accent-sky-400 cursor-pointer"></div>
                                 </div>
-                                <div class="flex items-center border-t border-orange-200/30 pt-3"><span class="font-bold text-orange-800 text-sm">👟 걸음수</span><div class="ml-auto flex items-center gap-2"><input type="number" id="walk_val" class="sugar-input !w-[90px]" placeholder="0"><span class="text-[11px] text-orange-800/60 font-bold">보</span></div></div>
+                                <div class="flex items-center border-t border-orange-200/30 pt-3"><span class="font-bold text-orange-800 text-sm">👟 걸음수</span><div class="ml-auto flex items-center gap-2"><input type="number" id="walk_val" class="sugar-input !w-[90px]" placeholder="0"></div></div>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Blood Sugar: Lunch -->
+                            <!-- 점심 (사진 D/E열) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
-                                    <div class="flex gap-2 items-center">
-                                        <button onclick="fetchMealData()" title="급식 가져오기" class="bg-white p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-sky-500 transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        </button>
-                                        <input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
-                                    </div>
-                                </div>
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span><input type="number" id="l_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
                                 <textarea id="l_memo" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
                             </div>
-                            <!-- Blood Sugar: Dinner -->
+                            <!-- 저녁 (사진 F/G열) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="d_val" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
                                 <textarea id="d_memo" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
                             </div>
                         </div>
-                        <!-- Extra Memo -->
-                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200 pb-3"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="memo_val" class="memo-area h-[60px]" placeholder="오늘의 특이사항이나 감정 기록"></textarea></div>
+                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="memo_val" class="memo-area h-[60px]" placeholder="특이사항 기록"></textarea></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Chart View -->
+            <!-- 차트 뷰 -->
             <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
-                    <div class="flex items-center gap-2 mb-6">
+                    <div class="flex gap-2 mb-6">
                         <button onclick="setChartType('sugar')" id="chart-btn-sugar" class="px-5 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-bold shadow-md transition">혈당 추이</button>
                         <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-500 text-sm font-bold transition hover:bg-slate-200">체중 변화</button>
                     </div>
                     <div class="w-full h-[400px] relative"><canvas id="mainChart"></canvas></div>
                 </div>
             </section>
-            
-            <!-- Analysis View -->
+
+            <!-- AI 분석 뷰 -->
             <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto text-center">
                 <div class="bg-white rounded-[2.5rem] border border-slate-200 p-6 md:p-10 shadow-sm mt-2">
                     <div class="flex items-center justify-between mb-8"><h2 class="text-xl font-black text-slate-800">🧠 AI 건강 분석</h2><button onclick="runAIAnalysis('general')" id="analysis-btn" class="bg-sky-500 text-white px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-lg hover:scale-105 active:scale-95 transition">📊 분석 리포트 생성</button></div>
-                    <div class="bg-slate-50 rounded-3xl p-4 mb-8 border border-slate-200">
-                        <div class="flex gap-2">
-                            <textarea id="ai-question-input" class="flex-grow bg-white border border-slate-200 rounded-2xl p-4 text-sm outline-none resize-none shadow-inner" rows="2" placeholder="혈당 관리 방법이나 데이터 분석 질문을 입력하세요."></textarea>
-                            <button onclick="runAIAnalysis('question')" id="ask-btn" class="bg-slate-800 text-white w-14 rounded-2xl flex items-center justify-center hover:bg-slate-900 transition">🔍</button>
-                        </div>
-                    </div>
-                    <div id="analysis-loading" class="hidden py-16"><div class="loader mb-4"></div><p class="text-sky-600 font-bold">AI가 건강 데이터를 정밀 분석 중입니다...</p></div>
-                    <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner overflow-hidden leading-relaxed">
-                        <div id="analysis-result-content" class="text-slate-700 space-y-4"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Settings View -->
-            <section id="view-settings" class="view-section hidden max-w-4xl mx-auto">
-                <div class="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-                    <div class="flex justify-between items-center mb-8"><h2 class="text-xl font-bold text-slate-800">⚙️ 학교 및 동기화 설정</h2><button onclick="switchView('calendar')" class="text-slate-300 text-2xl hover:text-slate-500">✕</button></div>
-                    <div class="p-6 bg-sky-50 text-sky-700 rounded-2xl font-bold mb-8 italic text-center text-sm shadow-inner"><span id="school-name-display">학교 정보를 로드 중...</span></div>
-                    <div class="flex gap-2"><input type="text" id="school-search-input" class="flex-grow border border-slate-200 rounded-2xl px-5 py-4 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-sky-200 transition" placeholder="학교 이름을 입력하세요 (예: 서울초등학교)"><button onclick="searchSchool()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold hover:bg-slate-900 transition">검색</button></div>
-                    <div id="school-search-results" class="max-h-64 overflow-y-auto mt-6 space-y-2 pr-2"></div>
+                    <div id="analysis-loading" class="hidden py-16"><div class="loader mb-4"></div><p class="text-sky-600 font-bold">AI가 시트 데이터를 분석 중입니다...</p></div>
+                    <div id="analysis-result-container" class="hidden text-left bg-white border border-slate-100 rounded-3xl p-8 shadow-inner overflow-hidden leading-relaxed"><div id="analysis-result-content" class="text-slate-700 whitespace-pre-wrap"></div></div>
                 </div>
             </section>
         </main>
 
-        <!-- Bottom Navigation -->
         <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-md bg-white/95 backdrop-blur-xl border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
-            <button onclick="handleAutoSaveBeforeSwitch('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-2xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
-            <button onclick="handleAutoSaveBeforeSwitch('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
-            <button onclick="handleAutoSaveBeforeSwitch('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">💡</span><span class="text-[10px] font-bold">분석</span></button>
+            <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-2xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
+            <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
+            <button onclick="switchView('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">💡</span><span class="text-[10px] font-bold">분석</span></button>
         </nav>
     </div>
 
-    <!-- UI Components: Modal & Overlay -->
     <div id="overlay" class="overlay" onclick="closeModal()"></div>
     <div id="message-box" class="custom-modal">
-        <div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm max-h-[40vh] overflow-y-auto"></div>
-        <button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">확인</button>
+        <div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div>
+        <button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">확인</button>
     </div>
 
     <script>
-        // [중요] SCRIPT_URL에 구글 앱스 스크립트 '웹 앱' URL을 정확히 입력하세요.
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec"; 
         
-        let currentMonth = new Date(), records = {}, schoolInfo = null, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar';
+        let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar';
 
         window.onload = async () => { 
-            loadLocalData(); 
-            renderCalendar(); 
-            displayCurrentSchool(); 
+            const local = localStorage.getItem('health_records_v6');
+            if(local) { records = JSON.parse(local); renderCalendar(); }
             if (isValidUrl()) await syncWithCloud(); 
         };
 
         function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
 
-        function loadLocalData() { 
-            try { 
-                const local = localStorage.getItem('health_records_v6');
-                if(local) records = JSON.parse(local);
-                const school = localStorage.getItem('health_school_v6');
-                if(school) schoolInfo = JSON.parse(school);
-            } catch(e) { console.error("Local Load Error", e); } 
-        }
-        
         async function syncWithCloud() {
             if (isSyncing || !isValidUrl()) return; 
             isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
             try { 
                 const response = await fetch(SCRIPT_URL); 
                 const data = await response.json(); 
-                // [Smart Merge] 서버 데이터를 기반으로 하되 로컬 데이터가 최신이면 병합
-                if (data.records) { 
-                    records = {...data.records, ...records}; 
+                if (data && data.records) { 
+                    records = data.records; // 서버 데이터로 동기화
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
                     renderCalendar(); 
-                }
-                if (data.schoolInfo) { 
-                    schoolInfo = data.schoolInfo; 
-                    localStorage.setItem('health_school_v6', JSON.stringify(schoolInfo)); 
-                    displayCurrentSchool(); 
                 }
             } catch (e) { console.error("Cloud Sync Failed", e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
         }
@@ -201,7 +153,6 @@
         async function handleSave() {
             if (!selectedDateStr) return;
             const record = { 
-                type: "save",
                 date: selectedDateStr, 
                 m_val: document.getElementById('m_val').value, 
                 m_memo: document.getElementById('m_memo').value, 
@@ -219,7 +170,6 @@
             
             if (isValidUrl()) {
                 try {
-                    // text/plain 전송으로 Preflight 차단 및 CORS 우회
                     await fetch(SCRIPT_URL, { 
                         method: "POST", 
                         headers: { 'Content-Type': 'text/plain' },
@@ -230,32 +180,26 @@
         }
 
         async function handleCloseInput() { await handleSave(); switchView('calendar'); }
-        async function handleAutoSaveBeforeSwitch(targetView) { if (activeView === 'input') await handleSave(); switchView(targetView); }
 
-        async function runAIAnalysis(mode) {
-            const btnA = document.getElementById('analysis-btn'), btnB = document.getElementById('ask-btn'), loading = document.getElementById('analysis-loading'), container = document.getElementById('analysis-result-container'), content = document.getElementById('analysis-result-content'), qInput = document.getElementById('ai-question-input');
-            if (Object.keys(records).length === 0) { showMessageBox("기록된 데이터가 없어 분석이 불가능합니다."); return; }
+        async function runAIAnalysis() {
+            const btn = document.getElementById('analysis-btn'), loading = document.getElementById('analysis-loading'), container = document.getElementById('analysis-result-container'), content = document.getElementById('analysis-result-content');
+            if (Object.keys(records).length === 0) { showMessageBox("데이터가 부족합니다."); return; }
             
-            btnA.disabled = btnB.disabled = true; loading.classList.remove('hidden'); container.classList.add('hidden');
-            // 최근 20일 데이터 요약 전송
-            const summary = Object.entries(records).sort((a,b)=>a[0].localeCompare(b[0])).slice(-20).map(([d,r])=>`${d}:혈당(${r.m_val||'-'}/${r.l_val||'-'}/${r.d_val||'-'}),체중(${r.weight||'-'}),걸음(${r.walk||0})`).join('\n');
+            btn.disabled = true; loading.classList.remove('hidden'); container.classList.add('hidden');
+            const summary = Object.entries(records).sort((a,b)=>a[0].localeCompare(b[0])).slice(-15).map(([d,r])=>`${d}:혈당(${r.m_val||'-'}/${r.l_val||'-'}/${r.d_val||'-'}),체중(${r.weight||'-'})`).join('\n');
             
             try {
                 const res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain' }, 
-                    body: JSON.stringify({ type: "analyze", prompt: mode==='question'?qInput.value:'최근 건강 리포트', dataStr: summary }) 
+                    body: JSON.stringify({ type: "analyze", prompt: '최근 건강 분석 리포트', dataStr: summary }) 
                 });
                 const result = await res.json();
                 if (result.answer) {
-                    content.innerHTML = result.answer
-                        .replace(/^### (.*$)/gim, '<h3 class="font-black text-lg mt-6 mb-2 text-slate-800">$1</h3>')
-                        .replace(/\*\*(.*?)\*\*/g, '<b class="text-sky-600 font-bold">$1</b>')
-                        .replace(/\n/g, '<br>');
+                    content.innerHTML = result.answer.replace(/\*\*(.*?)\*\*/g, '<b class="text-sky-600">$1</b>').replace(/\n/g, '<br>');
                     loading.classList.add('hidden'); container.classList.remove('hidden');
-                    if(mode==='question') qInput.value = '';
-                } else throw new Error(result.message || "답변을 가져올 수 없습니다.");
-            } catch (e) { showMessageBox("분석 실패: " + e.message); loading.classList.add('hidden'); } finally { btnA.disabled = btnB.disabled = false; }
+                } else throw new Error("AI 응답 실패");
+            } catch (e) { showMessageBox("분석 실패: " + e.message); loading.classList.add('hidden'); } finally { btn.disabled = false; }
         }
 
         function renderCalendar() {
@@ -270,11 +214,12 @@
                 const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
                 
+                let isToilet = r && (r.toilet === true || String(r.toilet).toUpperCase() === "TRUE");
                 let inner = `<div class="flex justify-between items-start w-full mb-1">
-                                <div class="${(r && r.toilet)?'bg-sky-100 rounded-full w-5 h-5 flex items-center justify-center':''}">
+                                <div class="${isToilet ? 'bg-sky-100 rounded-full w-5 h-5 flex items-center justify-center' : ''}">
                                     <span class="text-[10px] font-bold ${colorClass}">${d}</span>
                                 </div>
-                                ${(r && r.walk)?`<span class="text-[8px] text-slate-400 font-extrabold tracking-tighter">${r.walk}보</span>`:''}
+                                ${(r && r.walk) ? `<span class="text-[8px] text-slate-400 font-extrabold tracking-tighter">${r.walk}보</span>` : ''}
                              </div>`;
                 if (r) {
                     const chk = (v, t) => parseInt(v) <= t ? 'text-sky-500' : 'text-rose-500';
@@ -290,11 +235,13 @@
                     selectedDateStr = dateKey; 
                     const rec = records[dateKey]||{}; 
                     document.getElementById('input-date-title').innerText = `${dateKey}`;
-                    ['m_val','m_memo','l_val','l_memo','d_val','d_memo','weight_val','walk_val','memo_val'].forEach(id => {
+                    const fields = ['m_val','m_memo','l_val','l_memo','d_val','d_memo','weight','walk','memo'];
+                    fields.forEach(k => {
+                        const id = k.includes('val') || k === 'memo' ? k : (k === 'weight' ? 'weight_val' : (k === 'walk' ? 'walk_val' : k));
                         const el = document.getElementById(id);
-                        if(el) el.value = rec[id==='memo_val'?'memo':(id==='weight_val'?'weight':(id==='walk_val'?'walk':id))] || '';
+                        if(el) { el.value = rec[k] || ''; if(k.includes('val')) validateInputColor(el, k === 'm_val' ? 100 : 180); }
                     });
-                    document.getElementById('toilet_val').checked = !!rec.toilet;
+                    document.getElementById('toilet_val').checked = (rec.toilet === true || String(rec.toilet).toUpperCase() === "TRUE");
                     switchView('input');
                 };
                 body.appendChild(cell);
@@ -304,7 +251,7 @@
         function switchView(n) {
             activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); 
             document.getElementById(`view-${n}`).classList.remove('hidden');
-            document.getElementById('main-header').style.display = (n === 'input' || n === 'analysis') ? 'none' : 'block';
+            document.getElementById('main-header').style.display = (n === 'input') ? 'none' : 'block';
             document.querySelectorAll('#bottom-nav button').forEach(b => { 
                 if (b.id === `nav-${n}`) b.classList.replace('tab-inactive', 'tab-active'); 
                 else b.classList.replace('tab-active', 'tab-inactive');
@@ -318,36 +265,8 @@
         function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
         
-        async function searchSchool() {
-            const q = document.getElementById('school-search-input').value; if(!q) return;
-            try {
-                const res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                if(data.schoolInfo) document.getElementById('school-search-results').innerHTML = data.schoolInfo[1].row.map(s => `<div onclick="selectSchool('${s.ATPT_OFCDC_SC_CODE}','${s.SD_SCHUL_CODE}','${s.SCHUL_NM}')" class="p-4 border bg-white rounded-2xl font-bold cursor-pointer hover:bg-sky-50 shadow-sm transition">${s.SCHUL_NM}</div>`).join('');
-                else showMessageBox("학교를 찾을 수 없습니다.");
-            } catch (e) { showMessageBox("검색 중 오류 발생"); }
-        }
-
-        async function selectSchool(atpt, schul, name) {
-            schoolInfo = { ATPT_OFCDC_SC_CODE: atpt, SD_SCHUL_CODE: schul, SCHUL_NM: name };
-            localStorage.setItem('health_school_v6', JSON.stringify(schoolInfo));
-            displayCurrentSchool();
-            if (isValidUrl()) { await fetch(SCRIPT_URL, { method: "POST", headers: {'Content-Type': 'text/plain'}, body: JSON.stringify({ type: "settings", schoolInfo }) }); }
-            showMessageBox(`${name}이(가) 성공적으로 설정되었습니다.`);
-        }
-
-        function displayCurrentSchool() { document.getElementById('school-name-display').innerText = schoolInfo ? `✅ 현재 설정: ${schoolInfo.SCHUL_NM}` : "❌ 학교가 설정되지 않았습니다."; }
-        
         async function fetchMealData() {
-            if(!schoolInfo || !selectedDateStr) { showMessageBox("학교 설정을 먼저 완료해주세요."); switchView('settings'); return; }
-            try {
-                const res = await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${schoolInfo.ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${schoolInfo.SD_SCHUL_CODE}&MLSV_YMD=${selectedDateStr.replace(/-/g,'')}`);
-                const data = await res.json();
-                if(data.mealServiceDietInfo) {
-                    const row = data.mealServiceDietInfo[1].row.find(r => r.MMEAL_SC_NM.includes('중식'));
-                    if(row) document.getElementById('l_memo').value = row.DDISH_NM.replace(/<br\/>/g, '\n').replace(/\([^)]*\)/g, '').replace(/[*. ]/g, '').trim();
-                } else { showMessageBox("해당 날짜의 급식 데이터가 없습니다."); }
-            } catch(e) { showMessageBox("급식 정보 조회 실패"); }
+            showMessageBox("시트에 설정된 식단 데이터를 기반으로 관리합니다.");
         }
 
         function updateChart() {
@@ -359,20 +278,14 @@
                 return records[dk]?.[key] ? parseFloat(records[dk][key]) : null;
             };
             const ds = currentChartType === 'sugar' ? [
-                { label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.4, spanGaps: true },
-                { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.4, spanGaps: true },
-                { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.4, spanGaps: true }
-            ] : [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'weight')), borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.4, spanGaps: true }];
+                { label: '아침', data: labels.map(d => getVal(d, 'm_val')), borderColor: '#7dd3fc', tension: 0.4, spanGaps: true },
+                { label: '점심', data: labels.map(d => getVal(d, 'l_val')), borderColor: '#fb923c', tension: 0.4, spanGaps: true },
+                { label: '저녁', data: labels.map(d => getVal(d, 'd_val')), borderColor: '#1e3a8a', tension: 0.4, spanGaps: true }
+            ] : [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'weight')), borderColor: '#0ea5e9', tension: 0.4, spanGaps: true }];
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(canvas.getContext('2d'), { type: 'line', data: { labels, datasets: ds }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
         }
-        function setChartType(t) { 
-            currentChartType = t; 
-            const btnS = document.getElementById('chart-btn-sugar'), btnW = document.getElementById('chart-btn-weight');
-            if(t==='sugar'){ btnS.classList.replace('bg-slate-100','bg-sky-500'); btnS.classList.replace('text-slate-500','text-white'); btnW.classList.replace('bg-sky-500','bg-slate-100'); btnW.classList.replace('text-white','text-slate-500'); }
-            else { btnW.classList.replace('bg-slate-100','bg-sky-500'); btnW.classList.replace('text-slate-500','text-white'); btnS.classList.replace('bg-sky-500','bg-slate-100'); btnS.classList.replace('text-white','text-slate-500'); }
-            updateChart(); 
-        }
+        function setChartType(t) { currentChartType = t; updateChart(); }
     </script>
 </body>
 </html>

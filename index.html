@@ -12,17 +12,18 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         
+        /* 숫자 입력창 스피너 제거 및 중앙 정렬 */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; text-align: center !important; padding: 0 !important; }
 
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; table-layout: fixed; }
         
-        /* 달력 셀 레이아웃: 125px(PC), 90px(모바일) */
+        /* 달력 셀 레이아웃 보존 */
         .day-cell { min-height: 125px; height: 125px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
         .today-border { border: 2.5px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
 
-        /* 모바일 전용: 상하 여백 1.5px 정밀 조정 */
+        /* 모바일 전용: 1.5px 정밀 여백 사양 유지 */
         @media (max-width: 640px) { 
             .day-cell { min-height: 90px; height: 90px; padding: 1.5px 3px 3px 3px !important; } 
             .mobile-date-header { height: 16px !important; margin-bottom: 1.5px !important; }
@@ -36,7 +37,7 @@
         .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
         .tab-inactive { color: #94a3b8; }
         
-        /* 분석(AI) 탭 말풍선 */
+        /* 분석 탭 UI 디자인 */
         .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 20px; font-size: 14px; line-height: 1.5; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .chat-user { background-color: #0ea5e9; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
         .chat-ai { background-color: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; white-space: pre-wrap; }
@@ -130,16 +131,15 @@
             <!-- 분석(AI) 섹션 -->
             <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto flex flex-col h-[70vh]">
                 <div class="flex-grow bg-slate-50 rounded-3xl p-4 overflow-y-auto flex flex-col gap-2 mb-4 border border-slate-200 shadow-inner" id="chat-container">
-                    <div class="chat-bubble chat-ai">안녕하세요! 그동안의 모든 기록을 바탕으로 혈당 분석 및 건강 상담을 도와드릴게요. 궁금한 점을 물어보세요.</div>
+                    <div class="chat-bubble chat-ai">안녕하세요! 기록을 바탕으로 분석 및 건강 상담을 도와드릴게요. 궁금한 점을 물어보세요.</div>
                 </div>
                 <div class="relative">
-                    <textarea id="ai-input" class="w-full border-2 border-slate-200 rounded-2xl p-4 pr-16 focus:border-sky-400 outline-none resize-none h-[80px] shadow-sm" placeholder="기록에 대해 물어보세요..." spellcheck="false"></textarea>
+                    <textarea id="ai-input" class="w-full border-2 border-slate-200 rounded-2xl p-4 pr-16 focus:border-sky-400 outline-none resize-none h-[80px] shadow-sm" placeholder="질문을 입력하세요..." spellcheck="false"></textarea>
                     <button id="send-ai-btn" onclick="askAI()" class="absolute right-3 bottom-3 w-10 h-10 bg-sky-500 text-white rounded-xl shadow-lg flex items-center justify-center font-bold hover:bg-sky-600 transition-all">↑</button>
                 </div>
             </section>
         </main>
 
-        <!-- 하단 네비게이션 -->
         <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white/95 backdrop-blur-xl border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
             <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
             <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
@@ -151,8 +151,8 @@
     <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">확인</button></div>
 
     <script>
-        // 사용자 제공 최신 웹 앱 URL 반영
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1WEEFWOaGYo792Q0IkqtfOHZxJ74i205zGpEq534lIvXbfOzyfzztrnmPwyEIkaI7/exec"; 
+        // 고정된 SCRIPT_URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycb1WEEFWOaGYo792Q0IkqtfOHZxJ74i205zGpEq534lIvXbfOzyfzztrnmPwyEIkaI7/exec"; 
         
         let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar', schoolInfo = null;
 
@@ -161,25 +161,25 @@
         window.onload = async () => { 
             const local = localStorage.getItem('health_records_v6');
             if(local) { records = JSON.parse(local); renderCalendar(); }
-            if (isValidUrl()) await syncWithCloud(); 
+            // 초기 로딩 지연을 통한 통신 안정성 확보
+            setTimeout(() => { if (isValidUrl()) syncWithCloud(); }, 200);
         };
 
         function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
 
+        /**
+         * [연동 고정] 데이터 불러오기: GET 방식 (GAS robustDateParse 대응)
+         */
         async function syncWithCloud() {
             if (isSyncing || !isValidUrl()) return; 
-            isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
+            isSyncing = true; 
+            const loader = document.getElementById('sync-status');
+            if(loader) loader.classList.remove('hidden');
+            
             try { 
-                // CORS 및 리다이렉트 대응을 위한 설정 추가
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'GET',
-                    mode: 'cors',
-                    cache: 'no-cache'
-                }); 
+                const response = await fetch(SCRIPT_URL, { redirect: 'follow' }); 
                 const data = await response.json(); 
                 if (data && data.records) { 
-                    // [근본 해결] 서버 데이터를 정답으로 인정하되, 
-                    // 빈 데이터가 올 경우를 대비해 최소한의 무결성 검증을 거칩니다.
                     records = data.records;
                     schoolInfo = data.schoolInfo;
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
@@ -187,93 +187,66 @@
                     if(activeView === 'chart') updateChart();
                 }
             } catch (e) { 
-                console.error("Sync Failed", e); 
+                console.warn("Sync Failed:", e.message);
             } finally { 
                 isSyncing = false; 
-                document.getElementById('sync-status').classList.add('hidden'); 
+                if(loader) loader.classList.add('hidden'); 
             }
         }
 
+        /**
+         * [연동 고정] 분석 요청: POST 방식 (상세 에러 로그 노출)
+         */
+        async function askAI() {
+            const input = document.getElementById('ai-input');
+            const question = input.value.trim();
+            if (!question) return;
+            const chatContainer = document.getElementById('chat-container');
+            const sendBtn = document.getElementById('send-ai-btn');
+            chatContainer.innerHTML += `<div class="chat-bubble chat-user">${question}</div>`;
+            input.value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            const loadingId = "loading-" + Date.now();
+            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">전체 기록 정밀 분석 중...</div>`;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            sendBtn.disabled = true;
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "ask_ai", question: question }) });
+                const result = await res.json();
+                document.getElementById(loadingId).remove();
+                if (result.result === "success") {
+                    chatContainer.innerHTML += `<div class="chat-bubble chat-ai">${result.answer}</div>`;
+                } else {
+                    chatContainer.innerHTML += `<div class="chat-bubble chat-ai border-2 border-rose-100 bg-rose-50 text-xs font-mono"><span class="text-rose-500 font-bold">[SERVER ERROR]</span><br>${result.message}</div>`;
+                }
+            } catch (e) {
+                const loader = document.getElementById(loadingId);
+                if(loader) loader.innerHTML = `<div class="text-rose-500 font-bold">[CONNECTION ERROR]</div>통신 장애 (구글 계정 하나만 로그인 권장)`;
+            } finally { sendBtn.disabled = false; chatContainer.scrollTop = chatContainer.scrollHeight; }
+        }
+
         async function fetchMeal() {
-            if (!selectedDateStr || !schoolInfo) { showMessageBox("학교 정보가 설정되어 있지 않습니다."); return; }
+            if (!selectedDateStr || !schoolInfo) return;
             const btn = document.querySelector('button[onclick="fetchMeal()"]');
             btn.innerHTML = '<div class="loader !w-4 !h-4"></div>';
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) });
                 const result = await res.json();
                 if (result.result === "success") document.getElementById('lunch_memo').value = result.menu;
-                else showMessageBox(result.message || "급식 정보를 찾을 수 없습니다.");
-            } catch (e) { showMessageBox("서버 연동 실패"); } finally { btn.innerHTML = '🍴'; }
-        }
-
-        /**
-         * 분석(AI) 기능: 질문 시에만 서버에 시트 전체 분석을 요청 (격리된 통로)
-         */
-        async function askAI() {
-            const input = document.getElementById('ai-input');
-            const question = input.value.trim();
-            if (!question) return;
-
-            const chatContainer = document.getElementById('chat-container');
-            const sendBtn = document.getElementById('send-ai-btn');
-
-            chatContainer.innerHTML += `<div class="chat-bubble chat-user">${question}</div>`;
-            input.value = '';
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            const loadingId = "loading-" + Date.now();
-            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">전체 기록을 분석 중입니다...</div>`;
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            sendBtn.disabled = true;
-
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ type: "ask_ai", question: question })
-                });
-                const result = await res.json();
-                document.getElementById(loadingId).remove();
-                if (result.result === "success") {
-                    chatContainer.innerHTML += `<div class="chat-bubble chat-ai">${result.answer}</div>`;
-                } else {
-                    chatContainer.innerHTML += `<div class="chat-bubble chat-ai text-rose-500">오류가 발생했습니다: ${result.message}</div>`;
-                }
-            } catch (e) {
-                if(document.getElementById(loadingId)) document.getElementById(loadingId).innerText = "서버 연결에 실패했습니다.";
-            } finally {
-                sendBtn.disabled = false;
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
+            } catch (e) {} finally { btn.innerHTML = '🍴'; }
         }
 
         async function handleSave() {
             if (!selectedDateStr) return;
-            const getValue = id => {
-                const el = document.getElementById(id);
-                return el ? (el.type === 'checkbox' ? el.checked : el.value) : '';
-            };
-            const record = { 
-                date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'),
-                lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'),
-                dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'),
-                extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), 
-                step_count: getValue('step_count'), is_success: getValue('is_success') 
-            };
+            const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
+            const record = { date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'), lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'), dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'), extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), step_count: getValue('step_count'), is_success: getValue('is_success') };
             records[selectedDateStr] = record; 
             localStorage.setItem('health_records_v6', JSON.stringify(records));
-            if (isValidUrl()) {
-                try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); } catch (e) { }
-            }
+            if (isValidUrl()) { try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); } catch (e) {} }
         }
 
         async function handleCloseInput() { await handleSave(); switchView('calendar'); }
-        function changeMonth(s) { 
-            currentMonth.setMonth(currentMonth.getMonth() + s); 
-            renderCalendar(); 
-            if(activeView === 'chart') updateChart(); 
-        }
-
+        function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); if(activeView === 'chart') updateChart(); }
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
@@ -281,60 +254,30 @@
             const now = new Date(), todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
             for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/40'}));
-            
             for (let d = 1; d <= last; d++) {
                 const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay(), isToday = dateKey === todayStr;
                 const cell = Object.assign(document.createElement('div'), { className: `day-cell flex flex-col ${isToday ? 'today-border' : ''}` });
                 let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
-                
-                // [성공 서클 디자인 준수]
                 let isSuccess = r && (r.is_success === true || String(r.is_success).toUpperCase() === "TRUE");
-                
-                let header = `<div class="flex justify-between items-center w-full shrink-0 mb-0.5 md:mb-1 mobile-date-header">
-                                <div class="w-4 h-4 md:w-6 md:h-6 flex items-center justify-center ${isSuccess ? 'bg-sky-200 rounded-full text-sky-700' : ''}">
-                                    <span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span>
-                                </div>
-                                ${(r && r.step_count) ? `<span class="text-[9.5px] md:text-[11.5px] text-slate-400 font-extrabold tracking-tighter self-center">${r.step_count}</span>` : ''}
-                             </div>`;
+                let header = `<div class="flex justify-between items-center w-full shrink-0 mb-0.5 md:mb-1 mobile-date-header"><div class="w-4 h-4 md:w-6 md:h-6 flex items-center justify-center ${isSuccess ? 'bg-sky-200 rounded-full text-sky-700' : ''}"><span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span></div>${(r && r.step_count) ? `<span class="text-[9.5px] md:text-[11.5px] text-slate-400 font-extrabold tracking-tighter self-center">${r.step_count}</span>` : ''}</div>`;
                 let bodyContent = `<div class="flex-grow flex flex-col gap-0 text-[11px] md:text-[12px] font-bold overflow-hidden leading-tight">`;
-                if (r) {
-                    const chk = (v, t) => parseFloat(v) <= t ? 'text-sky-500' : 'text-rose-500';
-                    if(r.morning_sugar) bodyContent += `<div class="truncate">🌥️<span class="${chk(r.morning_sugar, 100)}">${r.morning_sugar}</span></div>`;
-                    if(r.lunch_sugar) bodyContent += `<div class="truncate">☀️<span class="${chk(r.lunch_sugar, 180)}">${r.lunch_sugar}</span></div>`;
-                    if(r.dinner_sugar) bodyContent += `<div class="truncate">🌙<span class="${chk(r.dinner_sugar, 180)}">${r.dinner_sugar}</span></div>`;
-                }
+                if (r) { const chk = (v, t) => parseFloat(v) <= t ? 'text-sky-500' : 'text-rose-500'; if(r.morning_sugar) bodyContent += `<div class="truncate">🌥️<span class="${chk(r.morning_sugar, 100)}">${r.morning_sugar}</span></div>`; if(r.lunch_sugar) bodyContent += `<div class="truncate">☀️<span class="${chk(r.lunch_sugar, 180)}">${r.lunch_sugar}</span></div>`; if(r.dinner_sugar) bodyContent += `<div class="truncate">🌙<span class="${chk(r.dinner_sugar, 180)}">${r.dinner_sugar}</span></div>`; }
                 bodyContent += `</div>`;
                 let footer = (r && r.body_weight && parseFloat(r.body_weight) > 0) ? `<div class="mt-auto border-t border-slate-100 pt-0.5 text-[11px] md:text-[12px] text-slate-400 font-bold truncate shrink-0">⚖️${r.body_weight}<span class="hidden md:inline ml-0.5">kg</span></div>` : `<div class="mt-auto h-[16px] shrink-0"></div>`;
                 cell.innerHTML = header + bodyContent + footer;
                 cell.onclick = () => { selectedDateStr = dateKey; const rec = records[dateKey]||{}; document.getElementById('input-date-title').innerText = `${dateKey}`;
-                    ['morning_sugar','morning_memo','lunch_sugar','lunch_memo','dinner_sugar','dinner_memo','extra_memo','body_weight','step_count'].forEach(id => {
-                        const el = document.getElementById(id); if(el) { el.value = rec[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); }
-                    });
+                    ['morning_sugar','morning_memo','lunch_sugar','lunch_memo','dinner_sugar','dinner_memo','extra_memo','body_weight','step_count'].forEach(id => { const el = document.getElementById(id); if(el) { el.value = rec[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); } });
                     const successEl = document.getElementById('is_success'); if(successEl) successEl.checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE");
                     switchView('input');
                 };
                 body.appendChild(cell);
             }
         }
-
-        function switchView(n) {
-            activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); 
-            document.getElementById(`view-${n}`).classList.remove('hidden');
-            document.getElementById('main-header').style.display = (n === 'input') ? 'none' : 'block';
-            document.querySelectorAll('#bottom-nav button').forEach(b => { 
-                if (b.id === `nav-${n}`) b.classList.replace('tab-inactive', 'tab-active'); 
-                else b.classList.replace('tab-active', 'tab-inactive');
-            });
-            if(n==='calendar') renderCalendar(); 
-            else if(n==='chart') setTimeout(updateChart, 50);
-            else if(n==='analysis') window.scrollTo(0,0);
-        }
-
+        function switchView(n) { activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); document.getElementById(`view-${n}`).classList.remove('hidden'); document.getElementById('main-header').style.display = (n === 'input') ? 'none' : 'block'; document.querySelectorAll('#bottom-nav button').forEach(b => { if (b.id === `nav-${n}`) b.classList.replace('tab-inactive', 'tab-active'); else b.classList.replace('tab-active', 'tab-inactive'); }); if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50); window.scrollTo(0,0); }
         function validateInputColor(el, t) { const val = parseFloat(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
         function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
-        
         function updateChart() {
             const canvas = document.getElementById('mainChart'); if(!canvas) return;
             const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();

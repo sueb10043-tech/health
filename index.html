@@ -6,12 +6,14 @@
     <title>혈당 및 체중 매니저 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 차트 플러그인: 데이터 라벨 및 애노테이션 -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         
+        /* 숫자 입력창 화살표 제거 및 완전 중앙 정렬 */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; text-align: center !important; padding: 0 !important; }
@@ -49,16 +51,15 @@
         <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
             <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
                 <div class="flex items-center gap-6">
-                    <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full">〈</button>
+                    <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〈</button>
                     <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
-                    <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full">〉</button>
+                    <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〉</button>
                 </div>
                 <div id="sync-status" class="absolute right-6 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
             </div>
         </header>
 
         <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-24">
-            <!-- 달력 -->
             <section id="view-calendar" class="view-section">
                 <div class="max-w-4xl mx-auto border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white">
                     <div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] py-3 text-slate-500 uppercase tracking-widest">
@@ -68,12 +69,11 @@
                 </div>
             </section>
 
-            <!-- 입력 섹션 -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
                     <div class="flex justify-between items-center mb-6 border-b pb-3">
                         <h2 id="input-date-title" class="font-bold text-slate-800 text-xl tracking-tight"></h2>
-                        <button onclick="handleCloseInput()" class="text-slate-300 text-3xl font-light hover:text-slate-500">✕</button>
+                        <button onclick="handleCloseInput()" class="text-slate-300 text-3xl font-light hover:text-slate-500 transition-colors">✕</button>
                     </div>
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -92,18 +92,18 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- 점심 (D열: 수치, E열: 메모) -->
+                            <!-- 점심 (수치 입력창 왼쪽에 버튼 배치) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-1.5">
-                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg">🍴</button>
-                                        <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
+                                    <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg" title="급식 가져오기">🍴</button>
+                                        <input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
                                     </div>
-                                    <input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
                                 </div>
                                 <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
                             </div>
-                            <!-- 저녁 (F열: 수치, G열: 메모) -->
+                            <!-- 저녁 -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="dinner_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
                                 <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
@@ -114,13 +114,12 @@
                 </div>
             </section>
 
-            <!-- 차트 -->
             <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex gap-2">
                             <button onclick="setChartType('sugar')" id="chart-btn-sugar" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-[13px] font-bold shadow-md transition">혈당 추이</button>
-                            <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[13px] font-bold transition">체중 변화</button>
+                            <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[13px] font-bold transition hover:bg-slate-200">체중 변화</button>
                         </div>
                         <div id="chart-legend-container" class="flex gap-3 text-[11px] font-bold text-slate-500"></div>
                     </div>
@@ -245,7 +244,7 @@
                     document.getElementById('input-date-title').innerText = `${dateKey}`;
                     const fieldMap = {
                         'morning_sugar': rec.morning_sugar, 'morning_memo': rec.morning_memo,
-                        'lunch_sugar': rec.lunch_sugar, 'lunch_memo': rec.lunch_memo,
+                        'lunch_sugar': rec.lunch_sugar, 'lunch_menu': rec.lunch_menu,
                         'dinner_sugar': rec.dinner_sugar, 'dinner_menu': rec.dinner_menu,
                         'extra_memo': rec.extra_memo, 'body_weight': rec.body_weight, 'step_count': rec.step_count
                     };

@@ -21,7 +21,6 @@
         .day-cell { min-height: 125px; height: 125px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
         .today-border { border: 2.5px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
 
-        /* 모바일 1.5px 정밀 디자인 사양 유지 */
         @media (max-width: 640px) { 
             .day-cell { min-height: 90px; height: 90px; padding: 1.5px 3px 3px 3px !important; } 
             .mobile-date-header { height: 16px !important; margin-bottom: 1.5px !important; }
@@ -154,7 +153,7 @@
     <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold">확인</button></div>
 
     <script>
-        // [수정 완료] 주소 오타를 완벽히 수정했습니다. (z1WEE...)
+        // SCRIPT_URL: 오타 수정됨 (z1WEE...)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1WEEFWOaGYo792Q0IkqtfOHZxJ74i205zGpEq534lIvXbfOzyfzztrnmPwyEIkaI7/exec"; 
         
         let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar', schoolInfo = null;
@@ -166,7 +165,7 @@
             setTimeout(() => { if (isValidUrl()) syncWithCloud(); }, 500);
         };
 
-        function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.includes("macros/s/AKfycbz1WEE"); }
+        function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.includes("macros/s/AKfycbz"); }
 
         function updateStatus(type, msg) {
             const bar = document.getElementById('status-indicator');
@@ -177,9 +176,6 @@
             if (type === 'ok') setTimeout(() => bar.style.display = "none", 2000);
         }
 
-        /**
-         * [GET] 데이터 동기화: 캐시를 방지하고 가장 가벼운 방식으로 호출
-         */
         async function syncWithCloud() {
             if (isSyncing || !isValidUrl()) return; 
             isSyncing = true; updateStatus('syncing', '기록 로딩 중...');
@@ -200,7 +196,6 @@
         }
 
         async function fetchPost(payload) {
-            // 구글 서버와의 보안 충돌을 피하기 위해 text/plain 헤더 사용
             return await fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' }, 
@@ -247,14 +242,19 @@
             try {
                 const res = await fetchPost({ type: "ask_ai", question: question });
                 const result = await res.json();
-                document.getElementById(loadingId).remove();
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.remove();
                 if (result.result === "success") container.innerHTML += `<div class="chat-bubble chat-ai">${result.answer}</div>`;
                 else container.innerHTML += `<div class="chat-bubble chat-ai text-rose-500">서버 에러 발생</div>`;
-            } catch (e) { document.getElementById(loadingId).innerText = "연결 실패 (구글 로그인 확인)"; } finally { container.scrollTop = container.scrollHeight; }
+            } catch (e) { 
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.innerText = "연결 실패 (구글 로그인 확인)"; 
+            } finally { container.scrollTop = container.scrollHeight; }
         }
 
         async function handleCloseInput() { await handleSave(); switchView('calendar'); }
         function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); if(activeView === 'chart') updateChart(); }
+        
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); if(!body) return;
             body.innerHTML = '';
@@ -274,10 +274,34 @@
                 body.appendChild(cell);
             }
         }
-        function switchView(n) { activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); document.getElementById(`view-${n}`).classList.remove('hidden'); document.getElementById('main-header').style.display = (n === 'input') ? 'none' : 'block'; document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.replace('tab-active', 'tab-inactive')); document.getElementById(`nav-${n}`).classList.replace('tab-inactive', 'tab-active'); if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50); window.scrollTo(0,0); }
+
+        function switchView(n) {
+            activeView = n;
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            const targetView = document.getElementById(`view-${n}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            const header = document.getElementById('main-header');
+            if (header) header.style.display = (n === 'input') ? 'none' : 'block';
+
+            // 하단 네비게이션 버튼 상태 업데이트 (존재 여부 확인)
+            document.querySelectorAll('#bottom-nav button').forEach(b => {
+                b.classList.replace('tab-active', 'tab-inactive');
+            });
+            const activeNav = document.getElementById(`nav-${n}`);
+            if (activeNav) {
+                activeNav.classList.replace('tab-inactive', 'tab-active');
+            }
+
+            if (n === 'calendar') renderCalendar();
+            else if (n === 'chart') setTimeout(updateChart, 50);
+            window.scrollTo(0, 0);
+        }
+
         function validateInputColor(el, t) { el.style.color = !el.value ? '' : (parseFloat(el.value) <= t ? '#0ea5e9' : '#f43f5e'); }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
         function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
+        
         function updateChart() {
             const canvas = document.getElementById('mainChart'); if(!canvas) return;
             const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();

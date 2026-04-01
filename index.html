@@ -12,20 +12,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         
-        /* 숫자 입력창 스피너 제거 및 중앙 정렬 */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; text-align: center !important; padding: 0 !important; }
 
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; table-layout: fixed; }
         
-        /* 달력 셀 레이아웃 최적화 */
         .day-cell { min-height: 125px; height: 125px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
-        
-        /* 오늘 날짜 테두리 */
-        .today-border { border: 2.5px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
+        .today-border { border: 2px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
 
-        /* 모바일 전용: 1.5px 정밀 여백 및 높이 조정 */
+        /* 모바일 전용: 상하 여백 1.5px 및 높이 최적화 */
         @media (max-width: 640px) { 
             .day-cell { min-height: 90px; height: 90px; padding: 1.5px 3px 3px 3px !important; } 
             .mobile-date-header { height: 16px !important; margin-bottom: 1.5px !important; }
@@ -39,6 +35,10 @@
         .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
         .tab-inactive { color: #94a3b8; }
         
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 20px; font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+        .chat-user { background-color: #0ea5e9; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-ai { background-color: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; white-space: pre-wrap; }
+
         .custom-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); z-index: 10000; display: none; width: 90%; max-width: 500px; }
         .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; z-index: 9000; backdrop-filter: blur(4px); }
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0ea5e9; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
@@ -69,7 +69,7 @@
                 </div>
             </section>
 
-            <!-- 입력 섹션 (D, E, F, G 데이터 매핑 엄격 준수) -->
+            <!-- 입력 섹션 -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
                     <div class="flex justify-between items-center mb-6 border-b pb-3">
@@ -78,12 +78,10 @@
                     </div>
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- 아침 -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="morning_sugar" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
                                 <textarea id="morning_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모" spellcheck="false"></textarea>
                             </div>
-                            <!-- 체중/걸음/성공 -->
                             <div class="bg-orange-50/40 p-4 rounded-2xl border border-orange-100">
                                 <div class="flex items-center justify-between mb-3">
                                     <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="body_weight" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[12px] font-bold">kg</span></div>
@@ -93,18 +91,16 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- 점심 (D열 혈당, E열 메모) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3">
                                     <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
                                     <div class="flex items-center gap-2">
-                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg" title="급식 연동">🍴</button>
+                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg" title="급식 가져오기">🍴</button>
                                         <input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
                                     </div>
                                 </div>
                                 <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단 기록" spellcheck="false"></textarea>
                             </div>
-                            <!-- 저녁 (F열 혈당, G열 메모) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="dinner_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
                                 <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단 기록" spellcheck="false"></textarea>
@@ -115,24 +111,35 @@
                 </div>
             </section>
 
-            <!-- 차트 섹션 -->
             <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex gap-2">
                             <button onclick="setChartType('sugar')" id="chart-btn-sugar" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-[13px] font-bold shadow-md transition">혈당 추이</button>
-                            <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[13px] font-bold transition hover:bg-slate-200">체중 변화</button>
+                            <button onclick="setChartType('weight')" id="chart-btn-weight" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[13px] font-bold transition">체중 변화</button>
                         </div>
                         <div id="chart-legend-container" class="flex gap-3 text-[11px] font-bold text-slate-500"></div>
                     </div>
                     <div class="w-full h-[400px] relative"><canvas id="mainChart"></canvas></div>
                 </div>
             </section>
+
+            <!-- 분석(AI) 섹션 -->
+            <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto flex flex-col h-[70vh]">
+                <div class="flex-grow bg-slate-50 rounded-3xl p-4 overflow-y-auto flex flex-col gap-2 mb-4 border border-slate-200" id="chat-container">
+                    <div class="chat-bubble chat-ai">안녕하세요! 그동안의 모든 기록을 바탕으로 혈당 분석 및 건강 상담을 도와드릴게요. 궁금한 점을 물어보세요.</div>
+                </div>
+                <div class="relative">
+                    <textarea id="ai-input" class="w-full border-2 border-slate-200 rounded-2xl p-4 pr-16 focus:border-sky-400 outline-none resize-none h-[80px]" placeholder="기록에 대해 물어보세요..." spellcheck="false"></textarea>
+                    <button id="send-ai-btn" onclick="askAI()" class="absolute right-3 bottom-3 w-10 h-10 bg-sky-500 text-white rounded-xl shadow-lg flex items-center justify-center font-bold hover:bg-sky-600 transition-all">↑</button>
+                </div>
+            </section>
         </main>
 
-        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[60%] max-w-xs bg-white/95 backdrop-blur-xl border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
-            <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-2xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
-            <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-2xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
+        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white/95 backdrop-blur-xl border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
+            <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
+            <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
+            <button onclick="switchView('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-xl">💡</span><span class="text-[10px] font-bold">분석</span></button>
         </nav>
     </div>
 
@@ -140,8 +147,8 @@
     <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">확인</button></div>
 
     <script>
-        // [중요] 반드시 새로 배포한 웹 앱 URL을 여기에 넣으세요.
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec"; 
+        // [업데이트] 사용자가 제공한 최신 웹 앱 URL 반영
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycb1WEEFWOaGYo792Q0IkqtfOHZxJ74i205zGpEq534lIvXbfOzyfzztrnmPwyEIkaI7/exec"; 
         
         let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar', schoolInfo = null;
 
@@ -150,31 +157,55 @@
         window.onload = async () => { 
             const local = localStorage.getItem('health_records_v6');
             if(local) { records = JSON.parse(local); renderCalendar(); }
-            if (isValidUrl()) await syncWithCloud(); 
+            // 페이지 로드 직후 잠시 대기하여 브라우저 환경 안정화 후 동기화 시도
+            setTimeout(() => {
+                if (isValidUrl()) syncWithCloud();
+            }, 500);
         };
 
         function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
 
         async function syncWithCloud() {
             if (isSyncing || !isValidUrl()) return; 
-            isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
+            isSyncing = true; 
+            document.getElementById('sync-status').classList.remove('hidden');
+            
             try { 
-                const response = await fetch(SCRIPT_URL); 
+                // 리다이렉트 및 캐시 방지를 위한 설정 추가
+                const response = await fetch(SCRIPT_URL, { 
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                }); 
+                
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                
                 const data = await response.json(); 
                 if (data && data.records) { 
                     records = data.records;
-                    schoolInfo = data.schoolInfo; // N2 셀 정보
+                    schoolInfo = data.schoolInfo;
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
                     renderCalendar(); 
                     if(activeView === 'chart') updateChart();
                 }
-            } catch (e) { console.error("Sync Failed", e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
+            } catch (e) { 
+                console.warn("Sync error (retrying if temporary):", e);
+                // 네트워크 문제 등으로 실패 시 3초 후 한 번 더 시도 (최대 1회)
+                if (!window._retried) {
+                    window._retried = true;
+                    setTimeout(syncWithCloud, 3000);
+                }
+            } finally { 
+                isSyncing = false; 
+                document.getElementById('sync-status').classList.add('hidden'); 
+            }
         }
 
         async function fetchMeal() {
             if (!selectedDateStr || !schoolInfo) { showMessageBox("학교 정보가 설정되어 있지 않습니다."); return; }
             const btn = document.querySelector('button[onclick="fetchMeal()"]');
-            const originalIcon = btn.innerHTML;
+            const originalContent = btn.innerHTML;
             btn.innerHTML = '<div class="loader !w-4 !h-4"></div>';
             try {
                 const res = await fetch(SCRIPT_URL, { 
@@ -183,12 +214,50 @@
                     body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) 
                 });
                 const result = await res.json();
+                if (result.result === "success") document.getElementById('lunch_memo').value = result.menu;
+                else showMessageBox(result.message || "급식 정보를 가져올 수 없습니다.");
+            } catch (e) { showMessageBox("서버 연동 실패: " + e.message); } finally { btn.innerHTML = originalContent; }
+        }
+
+        async function askAI() {
+            const input = document.getElementById('ai-input');
+            const question = input.value.trim();
+            if (!question) return;
+
+            const chatContainer = document.getElementById('chat-container');
+            const sendBtn = document.getElementById('send-ai-btn');
+
+            chatContainer.innerHTML += `<div class="chat-bubble chat-user">${question}</div>`;
+            input.value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const loadingId = "loading-" + Date.now();
+            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">데이터를 분석 중입니다...</div>`;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            sendBtn.disabled = true;
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ type: "ask_ai", question: question })
+                });
+                const result = await res.json();
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.remove();
+                
                 if (result.result === "success") {
-                    document.getElementById('lunch_memo').value = result.menu;
+                    chatContainer.innerHTML += `<div class="chat-bubble chat-ai">${result.answer}</div>`;
                 } else {
-                    showMessageBox(result.message || "급식 정보를 찾을 수 없습니다.");
+                    chatContainer.innerHTML += `<div class="chat-bubble chat-ai text-rose-500">오류가 발생했습니다: ${result.message}</div>`;
                 }
-            } catch (e) { showMessageBox("서버 연동 실패"); } finally { btn.innerHTML = originalIcon; }
+            } catch (e) {
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.innerText = "서버 연결에 실패했습니다: " + e.message;
+            } finally {
+                sendBtn.disabled = false;
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
         }
 
         async function handleSave() {
@@ -198,8 +267,7 @@
                 return el ? (el.type === 'checkbox' ? el.checked : el.value) : '';
             };
             const record = { 
-                date: selectedDateStr, 
-                morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'),
+                date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'),
                 lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'),
                 dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'),
                 extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), 
@@ -213,42 +281,29 @@
         }
 
         async function handleCloseInput() { await handleSave(); switchView('calendar'); }
-
-        function changeMonth(s) { 
-            currentMonth.setMonth(currentMonth.getMonth() + s); 
-            renderCalendar(); 
-            if(activeView === 'chart') updateChart();
-        }
+        function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); if(activeView === 'chart') updateChart(); }
 
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
             document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
-            
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-            
+            const now = new Date(), todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
             for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/40'}));
             
             for (let d = 1; d <= last; d++) {
                 const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const r = records[dateKey];
-                const dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
-                const isToday = dateKey === todayStr;
+                const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay(), isToday = dateKey === todayStr;
                 const cell = Object.assign(document.createElement('div'), { className: `day-cell flex flex-col ${isToday ? 'today-border' : ''}` });
-                
                 let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
                 let isSuccess = r && (r.is_success === true || String(r.is_success).toUpperCase() === "TRUE");
                 
-                // 모바일 서클 크기 w-4(기존의 2/3), 헤더 여백 정밀 조정
                 let header = `<div class="flex justify-between items-center w-full shrink-0 mb-0.5 md:mb-1 mobile-date-header">
                                 <div class="w-4 h-4 md:w-6 md:h-6 flex items-center justify-center ${isSuccess ? 'bg-sky-200 rounded-full text-sky-700' : ''}">
                                     <span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span>
                                 </div>
                                 ${(r && r.step_count) ? `<span class="text-[9.5px] md:text-[11.5px] text-slate-400 font-extrabold tracking-tighter self-center">${r.step_count}</span>` : ''}
                              </div>`;
-
                 let bodyContent = `<div class="flex-grow flex flex-col gap-0 text-[11px] md:text-[12px] font-bold overflow-hidden leading-tight">`;
                 if (r) {
                     const chk = (v, t) => parseFloat(v) <= t ? 'text-sky-500' : 'text-rose-500';
@@ -257,27 +312,13 @@
                     if(r.dinner_sugar) bodyContent += `<div class="truncate">🌙<span class="${chk(r.dinner_sugar, 180)}">${r.dinner_sugar}</span></div>`;
                 }
                 bodyContent += `</div>`;
-                let footer = (r && r.body_weight && parseFloat(r.body_weight) > 0) ? 
-                    `<div class="mt-auto border-t border-slate-100 pt-0.5 text-[11px] md:text-[12px] text-slate-400 font-bold truncate shrink-0">⚖️${r.body_weight}<span class="hidden md:inline ml-0.5">kg</span></div>` : 
-                    `<div class="mt-auto h-[16px] shrink-0"></div>`;
-
+                let footer = (r && r.body_weight && parseFloat(r.body_weight) > 0) ? `<div class="mt-auto border-t border-slate-100 pt-0.5 text-[11px] md:text-[12px] text-slate-400 font-bold truncate shrink-0">⚖️${r.body_weight}<span class="hidden md:inline ml-0.5">kg</span></div>` : `<div class="mt-auto h-[16px] shrink-0"></div>`;
                 cell.innerHTML = header + bodyContent + footer;
-                cell.onclick = () => { 
-                    selectedDateStr = dateKey; 
-                    const rec = records[dateKey]||{}; 
-                    document.getElementById('input-date-title').innerText = `${dateKey}`;
-                    const fieldMap = {
-                        'morning_sugar': rec.morning_sugar, 'morning_memo': rec.morning_memo,
-                        'lunch_sugar': rec.lunch_sugar, 'lunch_memo': rec.lunch_memo,
-                        'dinner_sugar': rec.dinner_sugar, 'dinner_memo': rec.dinner_memo,
-                        'extra_memo': rec.extra_memo, 'body_weight': rec.body_weight, 'step_count': rec.step_count
-                    };
-                    Object.keys(fieldMap).forEach(id => {
-                        const el = document.getElementById(id);
-                        if(el) { el.value = fieldMap[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); }
+                cell.onclick = () => { selectedDateStr = dateKey; const rec = records[dateKey]||{}; document.getElementById('input-date-title').innerText = `${dateKey}`;
+                    ['morning_sugar','morning_memo','lunch_sugar','lunch_memo','dinner_sugar','dinner_memo','extra_memo','body_weight','step_count'].forEach(id => {
+                        const el = document.getElementById(id); if(el) { el.value = rec[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); }
                     });
-                    const successEl = document.getElementById('is_success');
-                    if(successEl) successEl.checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE");
+                    const successEl = document.getElementById('is_success'); if(successEl) successEl.checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE");
                     switchView('input');
                 };
                 body.appendChild(cell);
@@ -297,57 +338,29 @@
         }
 
         function validateInputColor(el, t) { const val = parseFloat(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
-        function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
+        function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
         
         function updateChart() {
             const canvas = document.getElementById('mainChart'); if(!canvas) return;
             const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
             const labels = Array.from({length:lastDay}, (_,i)=>i+1);
-            const getVal = (day, key) => { 
-                const dk = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const val = records[dk]?.[key] ? parseFloat(records[dk][key]) : null;
-                return (val === 0) ? null : val;
-            };
-            const legendContainer = document.getElementById('chart-legend-container');
-            legendContainer.innerHTML = '';
-            const addLegend = (label, color) => {
-                legendContainer.innerHTML += `<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color:${color}"></span>${label}</div>`;
-            };
+            const getVal = (day, key) => { const dk = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; const val = records[dk]?.[key] ? parseFloat(records[dk][key]) : null; return (val === 0) ? null : val; };
+            const legendContainer = document.getElementById('chart-legend-container'); legendContainer.innerHTML = '';
+            const addLegend = (label, color) => { legendContainer.innerHTML += `<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color:${color}"></span>${label}</div>`; };
             let datasets = [], annotations = {};
             if(currentChartType === 'sugar') {
-                datasets = [
-                    { label: '아침', data: labels.map(d => getVal(d, 'morning_sugar')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.4, spanGaps: true, datalabels: { display: false } },
-                    { label: '점심', data: labels.map(d => getVal(d, 'lunch_sugar')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.4, spanGaps: true, datalabels: { display: false } },
-                    { label: '저녁', data: labels.map(d => getVal(d, 'dinner_sugar')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.4, spanGaps: true, datalabels: { display: false } }
-                ];
+                datasets = [ { label: '아침', data: labels.map(d => getVal(d, 'morning_sugar')), borderColor: '#7dd3fc', backgroundColor: '#7dd3fc', tension: 0.4, spanGaps: true, datalabels: { display: false } }, { label: '점심', data: labels.map(d => getVal(d, 'lunch_sugar')), borderColor: '#fb923c', backgroundColor: '#fb923c', tension: 0.4, spanGaps: true, datalabels: { display: false } }, { label: '저녁', data: labels.map(d => getVal(d, 'dinner_sugar')), borderColor: '#1e3a8a', backgroundColor: '#1e3a8a', tension: 0.4, spanGaps: true, datalabels: { display: false } } ];
                 addLegend('아침', '#7dd3fc'); addLegend('점심', '#fb923c'); addLegend('저녁', '#1e3a8a');
-                annotations = {
-                    line1: { type: 'line', yMin: 100, yMax: 100, borderColor: '#555', borderWidth: 1.5, label: { display: false } },
-                    line2: { type: 'line', yMin: 180, yMax: 180, borderColor: '#555', borderWidth: 1.5, label: { display: false } }
-                };
+                annotations = { line1: { type: 'line', yMin: 100, yMax: 100, borderColor: '#555', borderWidth: 1.5, label: { display: false } }, line2: { type: 'line', yMin: 180, yMax: 180, borderColor: '#555', borderWidth: 1.5, label: { display: false } } };
             } else {
                 datasets = [{ label: '체중(kg)', data: labels.map(d => getVal(d, 'body_weight')), borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.4, spanGaps: true, datalabels: { display: true, align: 'top', font: { weight: 'bold', size: 10 } } }];
                 addLegend('체중(kg)', '#0ea5e9');
             }
             if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(canvas.getContext('2d'), {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { min: currentChartType === 'weight' ? 45 : undefined, max: currentChartType === 'weight' ? 65 : undefined, grid: { color: '#f1f5f9' } } },
-                    plugins: { legend: { display: false }, datalabels: { color: '#64748b' }, annotation: { annotations } }
-                }
-            });
+            chartInstance = new Chart(canvas.getContext('2d'), { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: currentChartType === 'weight' ? 45 : undefined, max: currentChartType === 'weight' ? 65 : undefined, grid: { color: '#f1f5f9' } } }, plugins: { legend: { display: false }, datalabels: { color: '#64748b' }, annotation: { annotations } } } });
         }
-        function setChartType(t) { 
-            currentChartType = t; 
-            const btnS = document.getElementById('chart-btn-sugar'), btnW = document.getElementById('chart-btn-weight');
-            if(t==='sugar'){ btnS.classList.replace('bg-slate-100','bg-sky-500'); btnS.classList.replace('text-slate-500','text-white'); btnW.classList.replace('bg-sky-500','bg-slate-100'); btnW.classList.replace('text-white','text-slate-500'); }
-            else { btnW.classList.replace('bg-slate-100','bg-sky-500'); btnW.classList.replace('text-slate-500','text-white'); btnS.classList.replace('bg-sky-500','bg-slate-100'); btnS.classList.replace('text-white','text-slate-500'); }
-            updateChart(); 
-        }
+        function setChartType(t) { currentChartType = t; const btnS = document.getElementById('chart-btn-sugar'), btnW = document.getElementById('chart-btn-weight'); if(t==='sugar'){ btnS.classList.replace('bg-slate-100','bg-sky-500'); btnS.classList.replace('text-slate-500','text-white'); btnW.classList.replace('bg-sky-500','bg-slate-100'); btnW.classList.replace('text-white','text-slate-500'); } else { btnW.classList.replace('bg-slate-100','bg-sky-500'); btnW.classList.replace('text-slate-500','text-white'); btnS.classList.replace('bg-sky-500','bg-slate-100'); btnS.classList.replace('text-white','text-slate-500'); } updateChart(); }
     </script>
 </body>
 </html>

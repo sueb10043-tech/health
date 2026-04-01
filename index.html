@@ -6,27 +6,26 @@
     <title>혈당 및 체중 매니저 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 차트 플러그인: 데이터 라벨 및 애노테이션 -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         
-        /* 숫자 입력창 화살표 제거 및 완전 중앙 정렬 */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* 숫자 입력창 스피너 제거 및 중앙 정렬 */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; text-align: center !important; padding: 0 !important; }
 
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; table-layout: fixed; }
         
-        /* 달력 셀 높이 및 레이아웃 최적화 */
+        /* 달력 셀 레이아웃 최적화 */
         .day-cell { min-height: 125px; height: 125px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
         
         /* 오늘 날짜 테두리 */
-        .today-border { border: 2px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
+        .today-border { border: 2.5px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
 
+        /* 모바일 전용: 1.5px 정밀 여백 및 높이 조정 */
         @media (max-width: 640px) { 
             .day-cell { min-height: 90px; height: 90px; padding: 1.5px 3px 3px 3px !important; } 
             .mobile-date-header { height: 16px !important; margin-bottom: 1.5px !important; }
@@ -60,6 +59,7 @@
         </header>
 
         <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-24">
+            <!-- 달력 섹션 -->
             <section id="view-calendar" class="view-section">
                 <div class="max-w-4xl mx-auto border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white">
                     <div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] py-3 text-slate-500 uppercase tracking-widest">
@@ -69,6 +69,7 @@
                 </div>
             </section>
 
+            <!-- 입력 섹션 (D, E, F, G 데이터 매핑 엄격 준수) -->
             <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
                     <div class="flex justify-between items-center mb-6 border-b pb-3">
@@ -80,9 +81,9 @@
                             <!-- 아침 -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="morning_sugar" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
-                                <textarea id="morning_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모"></textarea>
+                                <textarea id="morning_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모" spellcheck="false"></textarea>
                             </div>
-                            <!-- 체중 및 성공 -->
+                            <!-- 체중/걸음/성공 -->
                             <div class="bg-orange-50/40 p-4 rounded-2xl border border-orange-100">
                                 <div class="flex items-center justify-between mb-3">
                                     <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="body_weight" class="sugar-input !w-[75px]" placeholder="0.0"><span class="text-[12px] font-bold">kg</span></div>
@@ -92,28 +93,29 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- 점심 (수치 입력창 왼쪽에 버튼 배치) -->
+                            <!-- 점심 (D열 혈당, E열 메모) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3">
                                     <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
                                     <div class="flex items-center gap-2">
-                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg" title="급식 가져오기">🍴</button>
+                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg" title="급식 연동">🍴</button>
                                         <input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
                                     </div>
                                 </div>
-                                <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단 기록"></textarea>
+                                <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단 기록" spellcheck="false"></textarea>
                             </div>
-                            <!-- 저녁 -->
+                            <!-- 저녁 (F열 혈당, G열 메모) -->
                             <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
                                 <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="dinner_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
-                                <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단 기록"></textarea>
+                                <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단 기록" spellcheck="false"></textarea>
                             </div>
                         </div>
-                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="extra_memo" class="memo-area h-[60px]" placeholder="특이사항 기록"></textarea></div>
+                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200 pb-3"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="extra_memo" class="memo-area h-[60px]" placeholder="특이사항 기록" spellcheck="false"></textarea></div>
                     </div>
                 </div>
             </section>
 
+            <!-- 차트 섹션 -->
             <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-6">
@@ -138,7 +140,9 @@
     <div id="message-box" class="custom-modal"><div id="message-text" class="text-slate-700 font-bold mb-8 leading-relaxed text-sm"></div><button onclick="closeModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">확인</button></div>
 
     <script>
+        // [중요] 반드시 새로 배포한 웹 앱 URL을 여기에 넣으세요.
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzy5rTRkMCM_yGobsETJqY8oH3GQsAgs6IQQgomm0-vLe6AbaeIMOWBklm65B0TUwa/exec"; 
+        
         let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, currentChartType = 'sugar', activeView = 'calendar', schoolInfo = null;
 
         Chart.register(ChartDataLabels);
@@ -159,23 +163,32 @@
                 const data = await response.json(); 
                 if (data && data.records) { 
                     records = data.records;
-                    schoolInfo = data.schoolInfo;
+                    schoolInfo = data.schoolInfo; // N2 셀 정보
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
                     renderCalendar(); 
+                    if(activeView === 'chart') updateChart();
                 }
             } catch (e) { console.error("Sync Failed", e); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
         }
 
         async function fetchMeal() {
-            if (!selectedDateStr || !schoolInfo) return;
+            if (!selectedDateStr || !schoolInfo) { showMessageBox("학교 정보가 설정되어 있지 않습니다."); return; }
             const btn = document.querySelector('button[onclick="fetchMeal()"]');
+            const originalIcon = btn.innerHTML;
             btn.innerHTML = '<div class="loader !w-4 !h-4"></div>';
             try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) });
+                const res = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain' }, 
+                    body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) 
+                });
                 const result = await res.json();
-                if (result.result === "success") document.getElementById('lunch_memo').value = result.menu;
-                else showMessageBox(result.message || "급식 정보를 찾을 수 없습니다.");
-            } catch (e) { showMessageBox("서버 연동 실패"); } finally { btn.innerHTML = '🍴'; }
+                if (result.result === "success") {
+                    document.getElementById('lunch_memo').value = result.menu;
+                } else {
+                    showMessageBox(result.message || "급식 정보를 찾을 수 없습니다.");
+                }
+            } catch (e) { showMessageBox("서버 연동 실패"); } finally { btn.innerHTML = originalIcon; }
         }
 
         async function handleSave() {
@@ -185,7 +198,8 @@
                 return el ? (el.type === 'checkbox' ? el.checked : el.value) : '';
             };
             const record = { 
-                date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'),
+                date: selectedDateStr, 
+                morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'),
                 lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'),
                 dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'),
                 extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), 
@@ -200,12 +214,20 @@
 
         async function handleCloseInput() { await handleSave(); switchView('calendar'); }
 
+        function changeMonth(s) { 
+            currentMonth.setMonth(currentMonth.getMonth() + s); 
+            renderCalendar(); 
+            if(activeView === 'chart') updateChart();
+        }
+
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
             document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
+            
             const now = new Date();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            
             const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
             for (let i = 0; i < first; i++) body.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/40'}));
             
@@ -215,9 +237,11 @@
                 const dObj = new Date(dateKey.replace(/-/g, '/')), dayOfWeek = dObj.getDay();
                 const isToday = dateKey === todayStr;
                 const cell = Object.assign(document.createElement('div'), { className: `day-cell flex flex-col ${isToday ? 'today-border' : ''}` });
+                
                 let colorClass = (dayOfWeek === 0) ? "text-rose-500" : (dayOfWeek === 6 ? "text-sky-500" : "text-slate-800");
                 let isSuccess = r && (r.is_success === true || String(r.is_success).toUpperCase() === "TRUE");
                 
+                // 모바일 서클 크기 w-4(기존의 2/3), 헤더 여백 정밀 조정
                 let header = `<div class="flex justify-between items-center w-full shrink-0 mb-0.5 md:mb-1 mobile-date-header">
                                 <div class="w-4 h-4 md:w-6 md:h-6 flex items-center justify-center ${isSuccess ? 'bg-sky-200 rounded-full text-sky-700' : ''}">
                                     <span class="text-[12px] md:text-[14px] font-black ${colorClass}">${d}</span>
@@ -244,8 +268,8 @@
                     document.getElementById('input-date-title').innerText = `${dateKey}`;
                     const fieldMap = {
                         'morning_sugar': rec.morning_sugar, 'morning_memo': rec.morning_memo,
-                        'lunch_sugar': rec.lunch_sugar, 'lunch_menu': rec.lunch_menu,
-                        'dinner_sugar': rec.dinner_sugar, 'dinner_menu': rec.dinner_menu,
+                        'lunch_sugar': rec.lunch_sugar, 'lunch_memo': rec.lunch_memo,
+                        'dinner_sugar': rec.dinner_sugar, 'dinner_memo': rec.dinner_memo,
                         'extra_memo': rec.extra_memo, 'body_weight': rec.body_weight, 'step_count': rec.step_count
                     };
                     Object.keys(fieldMap).forEach(id => {
@@ -273,7 +297,6 @@
         }
 
         function validateInputColor(el, t) { const val = parseFloat(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
-        function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); }
         function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
         

@@ -43,7 +43,6 @@
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 연동 상태 지시계 */
         #status-indicator { font-size: 10px; font-weight: 800; padding: 2px 12px; display: flex; align-items: center; justify-content: center; gap: 6px; position: sticky; top: 0; z-index: 100; transition: all 0.3s; }
         .status-syncing { background-color: #e0f2fe; color: #0369a1; }
         .status-error { background-color: #fee2e2; color: #b91c1c; }
@@ -161,7 +160,7 @@
         window.onload = async () => { 
             const local = localStorage.getItem('health_records_v6');
             if(local) { records = JSON.parse(local); renderCalendar(); }
-            setTimeout(() => { if (isValidUrl()) syncWithCloud(); }, 200);
+            setTimeout(() => { if (isValidUrl()) syncWithCloud(); }, 300);
         };
 
         function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
@@ -178,15 +177,13 @@
             if (type === 'ok') setTimeout(() => bar.style.display = "none", 2000);
         }
 
-        /**
-         * [GET] 데이터 불러오기
-         */
         async function syncWithCloud() {
             if (isSyncing || !isValidUrl()) return; 
             isSyncing = true;
-            updateStatus('syncing', '시트에서 기록을 불러오는 중...');
+            updateStatus('syncing', '기록 불러오는 중...');
             try { 
                 const response = await fetch(SCRIPT_URL, { redirect: 'follow' }); 
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json(); 
                 if (data && data.records) { 
                     records = data.records;
@@ -194,22 +191,17 @@
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
                     renderCalendar(); 
                     if(activeView === 'chart') updateChart();
-                    updateStatus('ok', '연동 성공');
+                    updateStatus('ok', '불러오기 완료');
                 }
             } catch (e) { 
-                updateStatus('error', '불러오기 실패 (다중 계정 로그인 확인)');
+                // 에러 발생 시 상세 메시지 노출하여 원인 파악
+                updateStatus('error', `오류: ${e.message} (다중 계정 확인)`);
             } finally { isSyncing = false; }
         }
 
-        /**
-         * [POST] 급식 연동 기능
-         */
         async function fetchMeal() {
             if (!selectedDateStr) return;
-            if (!schoolInfo) {
-                showMessageBox("학교 정보(N2 셀)를 불러오지 못했습니다. 잠시 후 다시 시도하거나 시트를 확인해주세요.");
-                return;
-            }
+            if (!schoolInfo) { showMessageBox("학교 정보(N2 셀)를 찾을 수 없습니다."); return; }
             updateStatus('syncing', '급식 메뉴 가져오는 중...');
             try {
                 const res = await fetch(SCRIPT_URL, { 
@@ -221,35 +213,14 @@
                 if (result.result === "success") {
                     document.getElementById('lunch_memo').value = result.menu;
                     updateStatus('ok', '급식 메뉴 로드 완료');
-                } else {
-                    updateStatus('error', '급식 정보 없음');
-                }
-            } catch (e) {
-                updateStatus('error', '급식 연동 실패');
-            }
+                } else updateStatus('error', '급식 데이터 없음');
+            } catch (e) { updateStatus('error', `급식 오류: ${e.message}`); }
         }
 
-        /**
-         * [POST] 데이터 저장 기능
-         */
         async function handleSave() {
             if (!selectedDateStr) return;
             const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
-            const record = { 
-                date: selectedDateStr, 
-                morning_sugar: getValue('morning_sugar'), 
-                morning_memo: getValue('morning_memo'), 
-                lunch_sugar: getValue('lunch_sugar'), 
-                lunch_memo: getValue('lunch_memo'), 
-                dinner_sugar: getValue('dinner_sugar'), 
-                dinner_memo: getValue('dinner_memo'), 
-                extra_memo: getValue('extra_memo'), 
-                body_weight: getValue('body_weight'), 
-                step_count: getValue('step_count'), 
-                is_success: getValue('is_success') 
-            };
-            
-            // 로컬 우선 저장
+            const record = { date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'), lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'), dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'), extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), step_count: getValue('step_count'), is_success: getValue('is_success') };
             records[selectedDateStr] = record; 
             localStorage.setItem('health_records_v6', JSON.stringify(records));
             renderCalendar();
@@ -257,17 +228,11 @@
             if (isValidUrl()) {
                 updateStatus('syncing', '구글 시트에 저장 중...');
                 try { 
-                    const res = await fetch(SCRIPT_URL, { 
-                        method: "POST", 
-                        headers: { 'Content-Type': 'text/plain' }, 
-                        body: JSON.stringify(record) 
-                    });
+                    const res = await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) });
                     const result = await res.json();
                     if(result.result === "success") updateStatus('ok', '시트 저장 완료');
                     else throw new Error("Server Logic Error");
-                } catch (e) {
-                    updateStatus('error', '시트 저장 실패 (연결 상태 확인)');
-                }
+                } catch (e) { updateStatus('error', `저장 실패: ${e.message}`); }
             }
         }
 
@@ -283,7 +248,7 @@
             input.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
             const loadingId = "loading-" + Date.now();
-            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">전체 데이터 분석 중...</div>`;
+            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">분석 중...</div>`;
             chatContainer.scrollTop = chatContainer.scrollHeight;
             sendBtn.disabled = true;
             try {
@@ -294,7 +259,7 @@
                 else chatContainer.innerHTML += `<div class="chat-bubble chat-ai text-rose-500">오류: ${result.message}</div>`;
             } catch (e) {
                 const loader = document.getElementById(loadingId);
-                if(loader) loader.innerHTML = `<div class="text-rose-500">통신 실패 (시크릿 모드 권장)</div>`;
+                if(loader) loader.innerHTML = `<div class="text-rose-500">통신 오류: ${e.message}</div>`;
             } finally { sendBtn.disabled = false; chatContainer.scrollTop = chatContainer.scrollHeight; }
         }
 

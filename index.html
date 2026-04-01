@@ -18,11 +18,9 @@
         .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; table-layout: fixed; }
         
-        /* 달력 셀 레이아웃 (125px / 90px) */
         .day-cell { min-height: 125px; height: 125px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
         .today-border { border: 2.5px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
 
-        /* 모바일 전용: 1.5px 정밀 여백 사양 고정 */
         @media (max-width: 640px) { 
             .day-cell { min-height: 90px; height: 90px; padding: 1.5px 3px 3px 3px !important; } 
             .mobile-date-header { height: 16px !important; margin-bottom: 1.5px !important; }
@@ -42,14 +40,22 @@
 
         .custom-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); z-index: 10000; display: none; width: 90%; max-width: 500px; }
         .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; z-index: 9000; backdrop-filter: blur(4px); }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0ea5e9; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #status-indicator { font-size: 9px; font-weight: 900; position: fixed; top: 0; left: 0; width: 100%; z-index: 100; text-align: center; display: none; }
+        /* 연동 상태 지시계 */
+        #status-indicator { font-size: 10px; font-weight: 800; padding: 2px 12px; display: flex; align-items: center; justify-content: center; gap: 6px; position: sticky; top: 0; z-index: 100; transition: all 0.3s; }
+        .status-syncing { background-color: #e0f2fe; color: #0369a1; }
+        .status-error { background-color: #fee2e2; color: #b91c1c; }
+        .status-ok { background-color: #f0fdf4; color: #15803d; }
     </style>
 </head>
 <body>
-    <div id="status-indicator"></div>
+    <div id="status-indicator" class="status-syncing" style="display: none;">
+        <span id="status-icon" class="loader"></span>
+        <span id="status-msg">구글 시트 연동 중...</span>
+    </div>
+
     <div id="app-container" class="main-wrapper">
         <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
             <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
@@ -58,7 +64,6 @@
                     <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
                     <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〉</button>
                 </div>
-                <div id="sync-status" class="absolute right-6 top-1/2 -translate-y-1/2 hidden"><div class="loader"></div></div>
             </div>
         </header>
 
@@ -97,7 +102,7 @@
                                 <div class="flex items-center justify-between mb-3">
                                     <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
                                     <div class="flex items-center gap-2">
-                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg">🍴</button>
+                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm hover:bg-sky-50 transition flex items-center justify-center text-lg" title="급식 가져오기">🍴</button>
                                         <input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
                                     </div>
                                 </div>
@@ -128,10 +133,10 @@
 
             <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto flex flex-col h-[70vh]">
                 <div class="flex-grow bg-slate-50 rounded-3xl p-4 overflow-y-auto flex flex-col gap-2 mb-4 border border-slate-200 shadow-inner" id="chat-container">
-                    <div class="chat-bubble chat-ai">기록 분석 상담소입니다. 그동안의 모든 데이터를 바탕으로 건강 상담을 도와드릴게요. 궁금한 점을 물어보세요!</div>
+                    <div class="chat-bubble chat-ai">기록 분석 상담소입니다. 전체 기록을 바탕으로 분석을 도와드릴게요. 궁금한 점을 물어보세요!</div>
                 </div>
                 <div class="relative">
-                    <textarea id="ai-input" class="w-full border-2 border-slate-200 rounded-2xl p-4 pr-16 focus:border-sky-400 outline-none resize-none h-[80px] shadow-sm" placeholder="무엇이든 물어보세요..." spellcheck="false"></textarea>
+                    <textarea id="ai-input" class="w-full border-2 border-slate-200 rounded-2xl p-4 pr-16 focus:border-sky-400 outline-none resize-none h-[80px] shadow-sm" placeholder="기록에 대해 물어보세요..." spellcheck="false"></textarea>
                     <button id="send-ai-btn" onclick="askAI()" class="absolute right-3 bottom-3 w-10 h-10 bg-sky-500 text-white rounded-xl shadow-lg flex items-center justify-center font-bold hover:bg-sky-600 transition-all">↑</button>
                 </div>
             </section>
@@ -161,9 +166,25 @@
 
         function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.startsWith("https://script.google.com"); }
 
+        function updateStatus(type, msg) {
+            const bar = document.getElementById('status-indicator');
+            const msgEl = document.getElementById('status-msg');
+            const iconEl = document.getElementById('status-icon');
+            bar.style.display = "flex";
+            bar.className = `status-${type}`;
+            msgEl.innerText = msg;
+            if (type === 'syncing') iconEl.className = "loader";
+            else { iconEl.className = ""; iconEl.innerHTML = type === 'ok' ? "✅" : "⚠️"; }
+            if (type === 'ok') setTimeout(() => bar.style.display = "none", 2000);
+        }
+
+        /**
+         * [GET] 데이터 불러오기
+         */
         async function syncWithCloud() {
             if (isSyncing || !isValidUrl()) return; 
-            isSyncing = true; document.getElementById('sync-status').classList.remove('hidden');
+            isSyncing = true;
+            updateStatus('syncing', '시트에서 기록을 불러오는 중...');
             try { 
                 const response = await fetch(SCRIPT_URL, { redirect: 'follow' }); 
                 const data = await response.json(); 
@@ -173,10 +194,85 @@
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
                     renderCalendar(); 
                     if(activeView === 'chart') updateChart();
+                    updateStatus('ok', '연동 성공');
                 }
-            } catch (e) { console.warn("Cloud Sync Fail:", e.message); } finally { isSyncing = false; document.getElementById('sync-status').classList.add('hidden'); }
+            } catch (e) { 
+                updateStatus('error', '불러오기 실패 (다중 계정 로그인 확인)');
+            } finally { isSyncing = false; }
         }
 
+        /**
+         * [POST] 급식 연동 기능
+         */
+        async function fetchMeal() {
+            if (!selectedDateStr) return;
+            if (!schoolInfo) {
+                showMessageBox("학교 정보(N2 셀)를 불러오지 못했습니다. 잠시 후 다시 시도하거나 시트를 확인해주세요.");
+                return;
+            }
+            updateStatus('syncing', '급식 메뉴 가져오는 중...');
+            try {
+                const res = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain' }, 
+                    body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) 
+                });
+                const result = await res.json();
+                if (result.result === "success") {
+                    document.getElementById('lunch_memo').value = result.menu;
+                    updateStatus('ok', '급식 메뉴 로드 완료');
+                } else {
+                    updateStatus('error', '급식 정보 없음');
+                }
+            } catch (e) {
+                updateStatus('error', '급식 연동 실패');
+            }
+        }
+
+        /**
+         * [POST] 데이터 저장 기능
+         */
+        async function handleSave() {
+            if (!selectedDateStr) return;
+            const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
+            const record = { 
+                date: selectedDateStr, 
+                morning_sugar: getValue('morning_sugar'), 
+                morning_memo: getValue('morning_memo'), 
+                lunch_sugar: getValue('lunch_sugar'), 
+                lunch_memo: getValue('lunch_memo'), 
+                dinner_sugar: getValue('dinner_sugar'), 
+                dinner_memo: getValue('dinner_memo'), 
+                extra_memo: getValue('extra_memo'), 
+                body_weight: getValue('body_weight'), 
+                step_count: getValue('step_count'), 
+                is_success: getValue('is_success') 
+            };
+            
+            // 로컬 우선 저장
+            records[selectedDateStr] = record; 
+            localStorage.setItem('health_records_v6', JSON.stringify(records));
+            renderCalendar();
+
+            if (isValidUrl()) {
+                updateStatus('syncing', '구글 시트에 저장 중...');
+                try { 
+                    const res = await fetch(SCRIPT_URL, { 
+                        method: "POST", 
+                        headers: { 'Content-Type': 'text/plain' }, 
+                        body: JSON.stringify(record) 
+                    });
+                    const result = await res.json();
+                    if(result.result === "success") updateStatus('ok', '시트 저장 완료');
+                    else throw new Error("Server Logic Error");
+                } catch (e) {
+                    updateStatus('error', '시트 저장 실패 (연결 상태 확인)');
+                }
+            }
+        }
+
+        async function handleCloseInput() { await handleSave(); switchView('calendar'); }
+        
         async function askAI() {
             const input = document.getElementById('ai-input');
             const question = input.value.trim();
@@ -187,7 +283,7 @@
             input.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
             const loadingId = "loading-" + Date.now();
-            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">데이터를 분석 중입니다...</div>`;
+            chatContainer.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic text-slate-400">전체 데이터 분석 중...</div>`;
             chatContainer.scrollTop = chatContainer.scrollHeight;
             sendBtn.disabled = true;
             try {
@@ -195,34 +291,15 @@
                 const result = await res.json();
                 document.getElementById(loadingId).remove();
                 if (result.result === "success") chatContainer.innerHTML += `<div class="chat-bubble chat-ai">${result.answer}</div>`;
-                else chatContainer.innerHTML += `<div class="chat-bubble chat-ai text-rose-500 border-2 border-rose-100 bg-rose-50 text-xs font-mono"><span class="font-bold">[SERVER ERROR]</span><br>${result.message}</div>`;
+                else chatContainer.innerHTML += `<div class="chat-bubble chat-ai text-rose-500">오류: ${result.message}</div>`;
             } catch (e) {
                 const loader = document.getElementById(loadingId);
-                if(loader) loader.innerHTML = `<div class="text-rose-500 font-bold">[FETCH ERROR]</div>연결 실패 (구글 다중 로그인 충돌 가능성)`;
+                if(loader) loader.innerHTML = `<div class="text-rose-500">통신 실패 (시크릿 모드 권장)</div>`;
             } finally { sendBtn.disabled = false; chatContainer.scrollTop = chatContainer.scrollHeight; }
         }
 
-        async function fetchMeal() {
-            if (!selectedDateStr || !schoolInfo) return;
-            const btn = document.querySelector('button[onclick="fetchMeal()"]');
-            btn.innerHTML = '<div class="loader !w-4 !h-4"></div>';
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) });
-                const result = await res.json();
-                if (result.result === "success") document.getElementById('lunch_memo').value = result.menu;
-            } catch (e) {} finally { btn.innerHTML = '🍴'; }
-        }
-
-        async function handleSave() {
-            if (!selectedDateStr) return;
-            const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
-            const record = { date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'), lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'), dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'), extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), step_count: getValue('step_count'), is_success: getValue('is_success') };
-            records[selectedDateStr] = record; localStorage.setItem('health_records_v6', JSON.stringify(records));
-            if (isValidUrl()) { try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); } catch (e) {} }
-        }
-
-        async function handleCloseInput() { await handleSave(); switchView('calendar'); }
         function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); if(activeView === 'chart') updateChart(); }
+        
         function renderCalendar() {
             const body = document.getElementById('calendar-body'); body.innerHTML = '';
             const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
@@ -250,9 +327,12 @@
                 body.appendChild(cell);
             }
         }
+
         function switchView(n) { activeView = n; document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); document.getElementById(`view-${n}`).classList.remove('hidden'); document.getElementById('main-header').style.display = (n === 'input') ? 'none' : 'block'; document.querySelectorAll('#bottom-nav button').forEach(b => { if (b.id === `nav-${n}`) b.classList.replace('tab-inactive', 'tab-active'); else b.classList.replace('tab-active', 'tab-inactive'); }); if(n==='calendar') renderCalendar(); else if(n==='chart') setTimeout(updateChart, 50); window.scrollTo(0,0); }
         function validateInputColor(el, t) { const val = parseFloat(el.value); el.style.color = !el.value ? '' : (val <= t ? '#0ea5e9' : '#f43f5e'); }
         function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('message-box').style.display = 'none'; }
+        function showMessageBox(t) { document.getElementById('message-text').innerHTML = t; document.getElementById('overlay').style.display = 'block'; document.getElementById('message-box').style.display = 'block'; }
+        
         function updateChart() {
             const canvas = document.getElementById('mainChart'); if(!canvas) return;
             const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();

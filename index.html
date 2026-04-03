@@ -227,7 +227,6 @@
             );
         });
 
-        // 개인 루틴 (부모 높이 19px 강제 고정)
         const RoutineItem = memo(({ value, completed, color, onChange, onDelete }) => {
             return (
                 <div style={{ display: 'table', width: '100%', height: '19px', tableLayout: 'fixed' }} className="group/item mb-0">
@@ -252,7 +251,6 @@
             );
         });
 
-        // 체크리스트 (부모 높이 18px 강제 고정)
         const ChecklistItem = memo(({ value, completed, color, onChange, onDelete }) => {
             return (
                 <div className="flex items-center w-full group/item relative mb-0 h-[18px] overflow-hidden">
@@ -302,17 +300,18 @@
 
             const todayStr = useMemo(() => getLocalDateString(now), [now]);
 
+            // [안전 장치] 초기 로딩 완료 후에만 날짜 대조 및 자동 해제 실행
             useEffect(() => {
-                if (data.lastResetDate && data.lastResetDate !== todayStr) {
+                if (!isInitialLoading && data.lastResetDate && data.lastResetDate !== todayStr) {
                     setData(prev => ({
                         ...prev,
                         personalRoutines: (prev.personalRoutines || []).map(r => ({ ...r, completed: false })),
                         lastResetDate: todayStr
                     }));
-                } else if (!data.lastResetDate) {
+                } else if (!isInitialLoading && !data.lastResetDate) {
                     setData(prev => ({ ...prev, lastResetDate: todayStr }));
                 }
-            }, [todayStr, data.lastResetDate]);
+            }, [todayStr, isInitialLoading, data.lastResetDate]);
 
             const calendarDays = useMemo(() => {
                 const y = viewDate.getFullYear(), m = viewDate.getMonth(), adj = new Date(y, m, 1).getDay() === 0 ? 6 : new Date(y, m, 1).getDay() - 1;
@@ -332,7 +331,7 @@
 
             const updateData = useCallback((updates) => setData(prev => ({ ...prev, ...updates })), []);
 
-            // [해결] URL 파라미터로 시트 정보를 보내어 확실하게 저장 경로를 지정
+            // [핵심] URL 파라미터로 시트 정보를 강제로 지정하여 가장 안정적으로 저장하는 로직
             const saveToCloud = useCallback(async () => {
                 if (isInitialLoading || !GAS_URL) return;
                 setIsSyncing(true);
@@ -347,7 +346,7 @@
                         JSON.stringify({ lastResetDate: data.lastResetDate, dDayDate: data.dDayDate, dDayTitle: data.dDayTitle, completedEvalRows: data.completedEvalRows, schoolInfo: data.schoolInfo })
                     ];
                     
-                    // URL에 sheet와 range를 명시적으로 포함 (GET과 동일한 방식)
+                    // URL에 시트 이름과 범위를 명시적으로 포함 (no-cors 모드에서 가장 확실한 방법)
                     const targetUrl = `${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${encodeURIComponent(SAVE_RANGE)}`;
                     
                     await fetch(targetUrl, { 
@@ -397,7 +396,6 @@
                 }
             }, []);
 
-            // [해결] 예산 현황 A1 셀 데이터(budgets, amount) 연동 교정
             const fetchBudgetData = useCallback(async () => {
                 try {
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}&range=A1`);

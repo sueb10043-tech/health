@@ -2,671 +2,285 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Persistence Pro</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>혈당 및 체중 매니저 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
     <style>
-        :root { --zoom-level: 1; }
-        body { 
-            font-family: 'Pretendard', sans-serif; background-color: transparent; margin: 0; padding: 0;
-            width: 1920px; height: 1080px; overflow: hidden; -webkit-font-smoothing: antialiased;
-            transform-origin: top left; transform: scale(var(--zoom-level));
-            user-select: none; -webkit-user-select: none;
-        }
-        #root { height: 100%; display: flex; align-items: flex-start; justify-content: flex-start; position: relative; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         
-        textarea, input[type="text"], input[type="number"], .selectable-text { 
-            user-select: text !important; -webkit-user-select: text !important; cursor: text !important;
-            pointer-events: auto !important;
-        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; text-align: center !important; padding: 0 !important; }
 
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
+        .main-wrapper { max-width: 1200px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; table-layout: fixed; }
+        .day-cell { min-height: 125px; height: 125px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; overflow: hidden; min-width: 0; }
+        .today-border { border: 2.5px solid #0ea5e9 !important; border-radius: 4px; z-index: 10; }
 
-        .dashboard-container { 
-            margin-top: 5px; margin-left: 604px; margin-right: 260px; 
-            width: 1056px; height: 1070px; display: flex; flex-direction: column; position: relative;
-            overflow-y: auto; overflow-x: hidden; padding-bottom: 150px;
-            scrollbar-width: none; -ms-overflow-style: none;
+        @media (max-width: 640px) { 
+            .day-cell { min-height: 90px; height: 90px; padding: 4px !important; } 
+            .mobile-date-header { height: 18px !important; margin-bottom: 2px !important; }
         }
-        .dashboard-container::-webkit-scrollbar { display: none; }
+        .day-cell:hover { background-color: #f8fafc; }
+        .sugar-input { width: 80px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 700; font-size: 17px; outline: none; height: 38px !important; }
+        .memo-area { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; line-height: 1.6; font-size: 15px; outline: none; background-color: #fff; resize: none; }
+        
+        .tab-active { color: #0ea5e9; font-weight: 800; position: relative; }
+        .tab-active::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #0ea5e9; border-radius: 2px; }
+        .tab-inactive { color: #94a3b8; }
+        
+        .chat-bubble { max-width: 90%; padding: 12px 16px; border-radius: 20px; font-size: 14px; line-height: 1.5; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); word-break: break-all; }
+        .chat-user { background-color: #0ea5e9; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-ai { background-color: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; white-space: pre-wrap; }
+        .chat-error { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-family: monospace; font-size: 11px; }
 
-        .calendar-section { height: 750px; display: flex; flex-direction: column; padding: 0.5rem; flex-shrink: 0; overflow: visible; z-index: 10; }
-        
-        .remainder-section { 
-            padding: 0.2rem 0.5rem 0.5rem 0.5rem; 
-            display: flex; flex-direction: column; gap: 0.5rem; 
-            width: 100%; overflow: visible; position: relative; z-index: 5; 
-        }
-        .widget-grid-row {
-            display: grid;
-            grid-template-columns: 175px 270px 260px 311px;
-            gap: 0.5rem;
-            align-items: start;
-        }
-
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(203, 213, 225, 0.5); border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; min-height: 0; position: relative; }
-        
-        .calendar-grid-parent { 
-            display: grid; grid-template-columns: repeat(5, 1.7fr) repeat(2, 1fr); 
-            flex: 1; min-height: 0; background: #E2E8F0; gap: 1px; border-top: 1px solid #E2E8F0; width: 100%; 
-        }
-        
-        .header-cell { background-color: #ffffff; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; height: 24px; text-transform: uppercase; }
-        .table-cell { background: white; display: flex; flex-direction: column; padding: 2px 0px 2px 3px; min-width: 0; overflow: visible; position: relative; transition: background-color 0.2s; }
-        .today-highlight { outline: 2px solid #6366F1 !important; outline-offset: -2px; z-index: 50; }
-
-        .hide-scrollbar { scrollbar-width: none !important; -ms-overflow-style: none !important; }
-        .hide-scrollbar::-webkit-scrollbar { display: none !important; }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-        
-        .item-input-base { 
-            border: none !important; background: transparent !important; flex: 1 !important; 
-            width: 100%; outline: none; overflow: hidden; resize: none; padding: 0 !important;
-            display: block; word-break: break-all; white-space: pre-wrap;
-        }
-        .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
-        
-        .compact-checkbox { 
-            width: 13px !important; height: 13px !important; accent-color: #4f46e5; 
-            cursor: pointer; margin: 0 !important; padding: 0 !important;
-            border: none; outline: none; display: inline-block;
-        }
-        
-        .popover-base { position: absolute; background: white !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); z-index: 9999; animation: popFade 0.12s ease-out; }
-        @keyframes popFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        
-        .widget-header { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 0px; padding: 0 0.25rem; }
-        
-        .pillar-container { display: flex; width: 100%; gap: 3px; align-items: flex-start; }
-        .pillar { flex: 1; display: flex; flex-direction: column; gap: 0px; }
-
-        .sync-indicator { font-size: 10px; font-weight: 900; color: #6366f1; display: flex; align-items: center; gap: 4px; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 9999px; }
-        .loading-spinner { border: 2px solid #f3f3f3; border-top: 2px solid #6366f1; border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite; display: inline-block; }
+        #status-indicator { font-size: 10px; font-weight: 800; padding: 4px 12px; display: flex; align-items: center; justify-content: center; gap: 8px; position: sticky; top: 0; z-index: 1000; transition: all 0.3s; line-height: 1.4; }
+        .status-syncing { background-color: #e0f2fe; color: #0369a1; }
+        .status-error { background-color: #fee2e2; color: #b91c1c; }
+        .status-ok { background-color: #f0fdf4; color: #15803d; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .card-confirm-overlay { 
-            position: absolute; inset: 0; background: rgba(255, 255, 255, 0.98); 
-            z-index: 2000; display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; backdrop-filter: blur(4px); border-radius: 0.75rem; 
-            border: 2px solid #ef4444; padding: 0.5rem; text-align: center;
-        }
-
-        .budget-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; }
-        .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
-        .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
-        
-        .eval-table { width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; }
-        .eval-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 1px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 8.5px; height: 18px; }
-        .eval-table td { padding: 3px 1px 1px 1px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; overflow: visible; white-space: nowrap; font-weight: 800; font-size: 10.5px; height: 22px; position: relative; }
-        
-        .eval-factor-cell { cursor: default; position: relative; overflow: visible !important; }
-        .eval-tooltip-text { 
-            visibility: hidden; opacity: 0; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-            background: #1e293b; color: #fff; text-align: center; padding: 6px 12px; border-radius: 6px;
-            width: max-content; max-width: 250px; z-index: 9999999; transition: opacity 0.1s, visibility 0.1s;
-            pointer-events: none; white-space: normal !important; word-break: break-all; font-size: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #334155; margin-top: 4px;
-        }
-        .eval-tooltip-text::after { content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent #1e293b transparent; }
-        .eval-factor-cell:hover .eval-tooltip-text.show { visibility: visible; opacity: 1; }
-
-        .dday-badge { cursor: pointer; background: #6366f1; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 900; transition: all 0.2s; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); display: flex; align-items: center; gap: 6px; }
-        
-        .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 22px; border-bottom: 1px solid #f8fafc; }
-        .link-text-btn { text-align: left; font-size: 10px; font-weight: 900; color: #475569; flex: 1; padding: 1px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; outline: none !important; }
-        .link-text-btn:hover { background: #f1f5f9; color: #6366f1; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="status-indicator" class="status-syncing" style="display: none;">
+        <span id="status-icon" class="loader"></span>
+        <span id="status-msg">동기화 중...</span>
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef, useCallback, memo, useLayoutEffect } = React;
-
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzoCgmF_cfpNOaImXQ7yY0UPOZ5eDuH1whp7NKTdEAvjPWGO6y5GzvafqySyy3Oul1l/exec"; 
-        const DASHBOARD_SHEET = "교사용_바탕화면";
-        const BUDGET_SHEET = "교사용_예산";
-        const EVAL_SHEET = "교사용_평가";
-        const SAVE_RANGE = "A3:G3";
-        
-        const Icon = ({ name, className, size = 12 }) => {
-            const iconRef = useRef(null);
-            useEffect(() => { if (window.lucide && iconRef.current) { window.lucide.createIcons({ elements: [iconRef.current] }); } }, [name, size]);
-            return ( <span key={`${name}-${size}`} className="inline-flex items-center justify-center shrink-0 overflow-hidden" style={{ width: size, height: size }}> <i ref={iconRef} data-lucide={name} className={className} style={{ width: size, height: size }}></i> </span> );
-        };
-
-        const getSubjectColor = (sub) => {
-            if (sub === '국어') return 'text-indigo-600';
-            if (sub === '수학') return 'text-rose-600';
-            if (sub === '통합') return 'text-emerald-600';
-            return 'text-amber-600';
-        };
-
-        const getLocalDateString = (date) => {
-            if (!date) return "";
-            const year = date.getFullYear(), month = String(date.getMonth() + 1).padStart(2, '0'), day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-
-        const useAutoZoom = () => {
-            useEffect(() => {
-                const updateZoom = () => {
-                    const zoom = Math.min(window.innerWidth / 1920, 1);
-                    document.documentElement.style.setProperty('--zoom-level', zoom);
-                };
-                window.addEventListener('resize', updateZoom); updateZoom();
-                return () => window.removeEventListener('resize', updateZoom);
-            }, []);
-        };
-
-        const FactorCell = ({ factor, isFinished }) => {
-            const [showTooltip, setShowTooltip] = useState(false);
-            const textRef = useRef(null);
-            const handleMouseEnter = () => { if (textRef.current) setShowTooltip(textRef.current.scrollWidth > textRef.current.clientWidth); };
-            return (
-                <td className={`text-left px-1 eval-factor-cell ${isFinished ? 'eval-done-text' : ''}`} onMouseEnter={handleMouseEnter}>
-                    <div ref={textRef} className="truncate w-full">{factor}</div>
-                    <span className={`eval-tooltip-text ${showTooltip ? 'show' : ''}`}>{factor}</span>
-                </td>
-            );
-        };
-
-        const CardConfirmOverlay = ({ onConfirm, onCancel }) => (
-            <div className="card-confirm-overlay">
-                <Icon name="alert-triangle" className="text-red-500 mb-1" size={24} />
-                <h3 className="font-black text-slate-800 text-[11px] mb-0.5">정말 모두 삭제할까요?</h3>
-                <div className="flex gap-1.5 w-full mt-2 px-4">
-                    <button onClick={onCancel} className="flex-1 h-6 bg-slate-100 text-slate-600 rounded font-black text-[10px]">취소</button>
-                    <button onClick={onConfirm} className="flex-1 h-6 bg-red-500 text-white rounded font-black text-[10px]">삭제</button>
+    <div id="app-container" class="main-wrapper">
+        <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
+            <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
+                <div class="flex items-center gap-6">
+                    <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〈</button>
+                    <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
+                    <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〉</button>
                 </div>
             </div>
-        );
+        </header>
 
-        const MonthlyPlanItem = memo(({ value, completed, color, onChange, onDelete }) => {
-            const textareaRef = useRef(null);
-            const adjustHeight = useCallback(() => { 
-                if (textareaRef.current) { 
-                    textareaRef.current.style.height = "auto"; 
-                    textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; 
-                } 
-            }, []);
-            useLayoutEffect(() => { adjustHeight(); }, [value, adjustHeight]);
-            
-            return (
-                <div className="flex w-full group/item relative mb-[1.5px]">
-                    <div className="flex items-center w-full">
-                        <div className="checkbox-container flex items-center justify-center shrink-0 w-[16px] mr-1.5" style={{ height: '18px' }}>
-                            <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
-                        </div>
-                        <textarea 
-                            ref={textareaRef} 
-                            rows={1} 
-                            onMouseDown={(e) => e.stopPropagation()} 
-                            spellCheck={false} 
-                            className={`item-input-base text-[12px] font-black leading-[1.5] flex-1 ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : (color || '#1E293B') }} 
-                            value={value} 
-                            onChange={(e) => onChange({text: e.target.value})} 
-                            onInput={adjustHeight} 
-                        />
-                        <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-0 m-0 mr-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
+        <main class="flex-grow p-3 md:p-6 overflow-x-hidden pb-24">
+            <section id="view-calendar" class="view-section">
+                <div id="calendar-body" class="border border-slate-200 rounded-3xl overflow-hidden shadow-sm bg-white"></div>
+            </section>
+
+            <section id="view-input" class="view-section hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-xl mb-10">
+                    <div class="flex justify-between items-center mb-6 border-b pb-3">
+                        <h2 id="input-date-title" class="font-bold text-slate-800 text-xl tracking-tight"></h2>
+                        <button onclick="handleCloseInput()" class="text-slate-300 text-3xl font-light hover:text-slate-500 transition-colors">✕</button>
                     </div>
-                </div>
-            );
-        });
-
-        const RoutineItem = memo(({ value, completed, color, onChange, onDelete }) => {
-            return (
-                <div style={{ display: 'table', width: '100%', height: '19px', tableLayout: 'fixed' }} className="group/item mb-0">
-                    <div style={{ display: 'table-cell', verticalAlign: 'middle', width: '22px' }}>
-                        <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
-                    </div>
-                    <div style={{ display: 'table-cell', verticalAlign: 'middle' }}>
-                        <textarea 
-                            rows={1} 
-                            onMouseDown={(e) => e.stopPropagation()} 
-                            spellCheck={false} 
-                            className={`bg-transparent border-none outline-none text-[12px] font-black w-full p-0 m-0 leading-[1.5] resize-none ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : (color || '#1E293B'), height: '19px', display: 'block' }} 
-                            value={value} 
-                            onChange={(e) => onChange({text: e.target.value})} 
-                        />
-                    </div>
-                    <div style={{ display: 'table-cell', verticalAlign: 'middle', width: '18px', textAlign: 'right' }}>
-                        <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity h-full flex items-center justify-center"><Icon name="x" size={10} /></button>
-                    </div>
-                </div>
-            );
-        });
-
-        const ChecklistItem = memo(({ value, completed, color, onChange, onDelete }) => {
-            return (
-                <div className="flex items-center w-full group/item relative mb-0 h-[18px] overflow-hidden">
-                    <div className="flex items-center justify-center shrink-0 w-[22px] h-full">
-                        <input 
-                            type="checkbox" 
-                            checked={!!completed} 
-                            onChange={(e) => onChange({completed: e.target.checked})} 
-                            className="compact-checkbox relative -top-[0.2px]" 
-                        />
-                    </div>
-                    <div className="flex-1 h-full flex items-center">
-                        <input 
-                            type="text"
-                            onMouseDown={(e) => e.stopPropagation()} 
-                            spellCheck={false} 
-                            className={`bg-transparent border-none outline-none text-[11.5px] font-black w-full p-0 m-0 h-[18px] leading-none ${completed ? 'strikethrough-line text-slate-400' : ''}`} 
-                            style={{ color: completed ? '' : (color || '#1E293B') }} 
-                            value={value} 
-                            onChange={(e) => onChange({text: e.target.value})} 
-                        />
-                    </div>
-                    <div className="flex items-center justify-center w-[18px] h-full">
-                        <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center shrink-0"><Icon name="x" size={10} /></button>
-                    </div>
-                </div>
-            );
-        });
-
-        function App() {
-            useAutoZoom();
-            const [now, setNow] = useState(new Date()); 
-            const [data, setData] = useState({ monthlyData: {}, routines: [], personalRoutines: [], waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {}, generalMemo: '', evaluationMemo: '', schoolInfo: null, lastResetDate: "", dDayDate: "", dDayTitle: "", links: [], completedEvalRows: [] });
-            const [budgetData, setBudgetData] = useState({ budgets: [] });
-            const [evalData, setEvalData] = useState([]);
-            const [mealData, setMealData] = useState([]);
-            const [isInitialLoading, setIsInitialLoading] = useState(true);
-            const [isSyncing, setIsSyncing] = useState(false);
-            const [isGoalEditPopOpen, setIsGoalEditPopOpen] = useState(false);
-            const [isAddWaterPopOpen, setIsAddWaterPopOpen] = useState(false);
-            const [isLinkAddOpen, setIsLinkAddOpen] = useState(false);
-            const [tempLink, setTempLink] = useState({ name: '', url: 'https://' });
-            const [confirmClear, setConfirmClear] = useState(null); 
-            const [tempGoalVal, setTempGoalVal] = useState('');
-            const [tempAddVal, setTempAddVal] = useState('');
-            const [viewDate, setViewDate] = useState(new Date());
-
-            const todayStr = useMemo(() => getLocalDateString(now), [now]);
-
-            // [안전 장치] 초기 로딩 완료 후에만 날짜 대조 및 자동 해제 실행
-            useEffect(() => {
-                if (!isInitialLoading && data.lastResetDate && data.lastResetDate !== todayStr) {
-                    setData(prev => ({
-                        ...prev,
-                        personalRoutines: (prev.personalRoutines || []).map(r => ({ ...r, completed: false })),
-                        lastResetDate: todayStr
-                    }));
-                } else if (!isInitialLoading && !data.lastResetDate) {
-                    setData(prev => ({ ...prev, lastResetDate: todayStr }));
-                }
-            }, [todayStr, isInitialLoading, data.lastResetDate]);
-
-            const calendarDays = useMemo(() => {
-                const y = viewDate.getFullYear(), m = viewDate.getMonth(), adj = new Date(y, m, 1).getDay() === 0 ? 6 : new Date(y, m, 1).getDay() - 1;
-                const days = [];
-                for (let i = 0; i < adj; i++) days.push(null);
-                for (let d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) days.push(new Date(y, m, d));
-                while (days.length % 7 !== 0) days.push(null);
-                return days;
-            }, [viewDate]);
-
-            const waterIntake = useMemo(() => data.waterHistory?.[todayStr] || 0, [data.waterHistory, todayStr]);
-            const dDayValue = useMemo(() => {
-                if (!data.dDayDate) return '';
-                const diff = Math.ceil((new Date(data.dDayDate) - new Date(todayStr)) / (1000 * 3600 * 24));
-                return diff === 0 ? "D-Day" : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
-            }, [data.dDayDate, todayStr]);
-
-            const updateData = useCallback((updates) => setData(prev => ({ ...prev, ...updates })), []);
-
-            // [핵심] URL 파라미터로 시트 정보를 강제로 지정하여 가장 안정적으로 저장하는 로직
-            const saveToCloud = useCallback(async () => {
-                if (isInitialLoading || !GAS_URL) return;
-                setIsSyncing(true);
-                try {
-                    const payload = [
-                        JSON.stringify(data.monthlyData),
-                        JSON.stringify(data.routines),
-                        JSON.stringify(data.personalRoutines),
-                        JSON.stringify({ waterTarget: data.waterTarget, waterHistory: data.waterHistory, waterHistoryLogs: data.waterHistoryLogs }),
-                        JSON.stringify(data.links),
-                        JSON.stringify({ generalMemo: data.generalMemo, evaluationMemo: data.evaluationMemo }),
-                        JSON.stringify({ lastResetDate: data.lastResetDate, dDayDate: data.dDayDate, dDayTitle: data.dDayTitle, completedEvalRows: data.completedEvalRows, schoolInfo: data.schoolInfo })
-                    ];
-                    
-                    // URL에 시트 이름과 범위를 명시적으로 포함 (no-cors 모드에서 가장 확실한 방법)
-                    const targetUrl = `${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${encodeURIComponent(SAVE_RANGE)}`;
-                    
-                    await fetch(targetUrl, { 
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        body: JSON.stringify({ data: [payload] }) 
-                    });
-                } catch (e) {
-                    console.error("Save Error:", e);
-                } finally {
-                    setIsSyncing(false);
-                }
-            }, [data, isInitialLoading]);
-
-            useEffect(() => {
-                const timer = setTimeout(() => {
-                    if (!isInitialLoading) saveToCloud();
-                }, 1500);
-                return () => clearTimeout(timer);
-            }, [data, isInitialLoading, saveToCloud]);
-
-            const loadFromCloud = useCallback(async () => {
-                if (!GAS_URL) return;
-                setIsSyncing(true);
-                try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${SAVE_RANGE}`);
-                    const result = await res.json();
-                    let values = typeof result === 'string' ? JSON.parse(result) : result;
-                    if (Array.isArray(values) && values[0]) {
-                        const row = values[0], sj = (s) => { try { return JSON.parse(s); } catch { return null; } };
-                        const meta = sj(row[6]) || {};
-                        setData({ 
-                            monthlyData: sj(row[0]) || {}, 
-                            routines: sj(row[1]) || [], 
-                            personalRoutines: sj(row[2]) || [], 
-                            ...(sj(row[3]) || { waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {} }), 
-                            links: sj(row[4]) || [], 
-                            ...(sj(row[5]) || { generalMemo: '', evaluationMemo: '' }), 
-                            ...meta 
-                        });
-                    }
-                } catch (e) {
-                    console.error("Load Error:", e);
-                } finally {
-                    setIsInitialLoading(false);
-                    setIsSyncing(false);
-                }
-            }, []);
-
-            const fetchBudgetData = useCallback(async () => {
-                try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}&range=A1`);
-                    const result = await res.json();
-                    if (result) {
-                        let rawData = (Array.isArray(result) && result[0]) ? result[0][0] : result;
-                        let parsed = [];
-                        try {
-                            parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                        } catch(e) { parsed = []; }
-                        
-                        // "budgets" 키를 예산명으로, "amount" 키를 잔액으로 정확히 매핑
-                        const formattedBudgets = Array.isArray(parsed) ? parsed.map(b => ({
-                            name: b.budgets || '항목 없음',
-                            balance: b.amount || 0
-                        })) : [];
-                        
-                        setBudgetData({ budgets: formattedBudgets });
-                    }
-                } catch (e) {
-                    console.error("Budget Error:", e);
-                }
-            }, []);
-
-            const fetchEvalData = useCallback(async () => {
-                try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}&range=A3:H100`);
-                    const result = await res.json();
-                    if (Array.isArray(result)) {
-                        let lastSub = "";
-                        setEvalData(result.filter(r => r.some(c => c && c.toString().trim() !== "")).map((r, i) => {
-                            const subName = (r[0] && r[0].toString().trim() !== "") ? r[0] : lastSub; lastSub = subName;
-                            return { sheetRow: i + 3, subject: subName, unit: r[1], factor: r[3], n1: r[4] || "", n2: r[5] || "", n3: r[6] || "", n4: r[7] || "" };
-                        }));
-                    }
-                } catch {}
-            }, []);
-
-            useEffect(() => {
-                if (!data.schoolInfo) return;
-                const loadMeal = async () => {
-                    try {
-                        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${data.schoolInfo.officeCode}&SD_SCHUL_CODE=${data.schoolInfo.schoolCode}&MLSV_YMD=${todayStr.replace(/-/g, '')}`;
-                        const res = await fetch(url);
-                        const resJson = await res.json();
-                        if (resJson.mealServiceDietInfo) {
-                            const dishes = resJson.mealServiceDietInfo[1].row[0].DDISH_NM.replace(/\([0-9.]+\)/g, '').split('<br/>').map(s => s.trim()).filter(s => s);
-                            setMealData(dishes);
-                        }
-                    } catch (e) {}
-                };
-                loadMeal();
-            }, [data.schoolInfo, todayStr]);
-
-            useEffect(() => { loadFromCloud(); fetchBudgetData(); fetchEvalData(); }, [loadFromCloud, fetchBudgetData, fetchEvalData]);
-
-            // 평가 계획 우선순위 정렬 로직 (국어2, 수학1, 통합2)
-            const prioritizedEvalData = useMemo(() => {
-                if (!evalData.length) return [];
-                const finishedRows = data.completedEvalRows || [], subjectOrder = ['국어', '수학', '통합'];
-                const subSorter = (a, b) => {
-                    const idxA = subjectOrder.indexOf(a.subject), idxB = subjectOrder.indexOf(b.subject);
-                    const wA = idxA === -1 ? 999 : idxA, wB = idxB === -1 ? 999 : idxB;
-                    if (wA !== wB) return wA - wB;
-                    return String(a.unit || "").localeCompare(String(b.unit || ""), 'ko');
-                };
-                const incomplete = evalData.filter(d => !finishedRows.includes(d.sheetRow)), complete = evalData.filter(d => finishedRows.includes(d.sheetRow));
-                const priorityRows = [], usedIds = new Set(), counts = { '국어': 2, '수학': 1, '통합': 2 };
-                subjectOrder.forEach(sub => {
-                    const subItems = incomplete.filter(d => d.subject === sub).sort((a, b) => String(a.unit || "").localeCompare(String(b.unit || ""), 'ko'));
-                    subItems.slice(0, counts[sub] || 0).forEach(item => { priorityRows.push(item); usedIds.add(item.sheetRow); });
-                });
-                const otherIncompleteRows = incomplete.filter(d => !usedIds.has(d.sheetRow)).sort(subSorter);
-                const sortedCompleteRows = complete.sort(subSorter);
-                return [...priorityRows, ...otherIncompleteRows, ...sortedCompleteRows];
-            }, [evalData, data.completedEvalRows]);
-
-            const addNewItem = (type) => {
-                if (type === 'personalRoutines') updateData({ personalRoutines: [...data.personalRoutines, { id: Date.now(), text: '', completed: false }] });
-                else if (type === 'routines') updateData({ routines: [...data.routines, { id: Date.now(), text: '', completed: false }] });
-            };
-
-            const toggleEvalDone = (idx) => {
-                setData(prev => {
-                    const list = [...(prev.completedEvalRows || [])];
-                    return { ...prev, completedEvalRows: list.includes(idx) ? list.filter(i => i !== idx) : [...list, idx] };
-                });
-            };
-
-            const cycleEvalResult = async (rowObj, colKey) => {
-                const results = ["", "◎", "○", "△"];
-                const nextVal = results[(results.indexOf(rowObj[colKey]) + 1) % results.length];
-                setEvalData(prev => prev.map(item => item.sheetRow === rowObj.sheetRow ? { ...item, [colKey]: nextVal } : item));
-                const colLetter = { n1: 'E', n2: 'F', n3: 'G', n4: 'H' }[colKey];
-                try { await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}`, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ range: `${colLetter}${rowObj.sheetRow}`, data: [[nextVal]] }) }); } catch (e) {}
-            };
-
-            const addNewLink = () => {
-                if (tempLink.name && tempLink.url) {
-                    updateData({ links: [...data.links, { id: Date.now(), text: tempLink.name, url: tempLink.url }] });
-                    setTempLink({ name: '', url: 'https://' });
-                    setIsLinkAddOpen(false);
-                }
-            };
-
-            return (
-                <div className="dashboard-container">
-                    <section className="calendar-section">
-                        <div className="glass-card h-full">
-                            <header className="flex items-center justify-between h-10 px-4 shrink-0">
-                                <div className="flex items-center gap-2 relative flex-1 min-w-0">
-                                    <Icon name="calendar-days" size={14} className="text-indigo-600" />
-                                    <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
-                                    <div className="dday-badge ml-2"><Icon name="flag" size={10} /><span>{data.dDayDate ? `${data.dDayTitle} ${dDayValue}` : "D-Day"}</span></div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌥️ 아침 공복</span><input type="number" id="morning_sugar" class="sugar-input" oninput="validateInputColor(this, 100)" placeholder="0"></div>
+                                <textarea id="morning_memo" class="memo-area h-[44px] pt-2" placeholder="아침 식단/메모"></textarea>
+                            </div>
+                            <div class="bg-orange-50/40 p-4 rounded-2xl border border-orange-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">⚖️ 체중</span><input type="number" step="0.1" id="body_weight" class="sugar-input !w-[75px]" placeholder="0.0"></div>
+                                    <div class="flex items-center gap-2"><span class="font-bold text-orange-800 text-sm">✨ 성공</span><input type="checkbox" id="is_success" class="w-6 h-6 accent-sky-400"></div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    {isSyncing && <div className="sync-indicator"><div className="loading-spinner"></div><span>동기화 중</span></div>}
-                                    <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[12px] font-black bg-slate-100 rounded shadow-sm h-[24px]">오늘</button>
-                                    <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-left" size={16}/></button>
-                                    <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-right" size={16}/></button>
-                                </div>
-                            </header>
-                            <div className="calendar-grid-parent rounded-b-[0.75rem]" style={{ gridTemplateRows: `24px repeat(${calendarDays.length / 7}, 1fr)` }}>
-                                {['월','화','수','목','금','토','일'].map((d,i)=>(<div key={d} className={`header-cell ${i === 5 ? 'text-blue-500' : i === 6 ? 'text-red-400' : 'text-slate-400'}`}>{d}</div>))}
-                                {calendarDays.map((date, i) => {
-                                    if (!date) return <div key={i} className="table-cell bg-white"></div>;
-                                    const dStr = getLocalDateString(date), dayData = (data.monthlyData || {})[dStr] || { items:[], bgColor: '#FFFFFF' };
-                                    const isHolidayBg = dayData.bgColor === '#FFF1F2';
-                                    return (
-                                        <div key={dStr} className={`table-cell group ${dStr === todayStr ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
-                                            <div className="flex items-center gap-1 h-[20px] px-0">
-                                                <span className={`text-[12px] font-black ${date.getDay() === 0 || isHolidayBg ? 'text-red-500' : date.getDay() === 6 ? 'text-blue-500' : 'text-slate-400'}`}>{date.getDate()}</span>
-                                                <input type="text" value={dayData.holiday||''} onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} style={{ color: isHolidayBg ? '#ef4444' : '#2563eb' }} className="bg-transparent text-[12px] font-black w-full outline-none truncate" spellCheck={false} />
-                                            </div>
-                                            <div className="flex-grow mt-0.5">
-                                                {(dayData.items || []).map(item => (
-                                                    <MonthlyPlanItem key={item.id} value={item.text} completed={item.completed} color={item.color} onChange={(u)=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: dayData.items.map(it=>it.id===item.id?{...it,...u}:it)}}})} onDelete={()=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: dayData.items.filter(it=>it.id!==item.id)}}})} />
-                                                ))}
-                                            </div>
-                                            <button onClick={()=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: [...dayData.items, {id:Date.now(), text:'', completed:false}]}}})} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded w-[16px] h-[16px] flex items-center justify-center transition-all"><Icon name="plus" size={10}/></button>
-                                        </div>
-                                    );
-                                })}
+                                <div class="flex items-center border-t border-orange-200/30 pt-3"><span class="font-bold text-orange-800 text-sm">👟 걸음수</span><div class="ml-auto flex items-center gap-2"><input type="number" id="step_count" class="sugar-input !w-[90px]" placeholder="0"></div></div>
                             </div>
                         </div>
-                    </section>
-
-                    <div className="remainder-section">
-                        <div className="widget-grid-row">
-                            <section className="glass-card h-[125px] overflow-visible z-[1000]">
-                                <header className="widget-header" style={{ height: '22px' }}><div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div></header>
-                                <div className="flex flex-col items-center justify-start flex-1 pt-[6px] pb-3 relative px-2 gap-1.5">
-                                    <button onClick={()=>setIsGoalEditPopOpen(!isGoalEditPopOpen)} className="text-[9px] font-black text-slate-400">Goal: {data.waterTarget}ml</button>
-                                    <div className="text-[22px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
-                                    <div className="w-full px-2"><div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden shadow-inner h-[8px]"><div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div></div></div>
-                                    <div className="flex gap-1 w-full relative items-center">
-                                        <button onClick={()=>updateData({waterHistory:{...data.waterHistory,[todayStr]:waterIntake+250}})} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black">+250</button>
-                                        <button onClick={()=>updateData({waterHistory:{...data.waterHistory,[todayStr]:waterIntake+500}})} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black">+500</button>
-                                        <button onClick={()=>setIsAddWaterPopOpen(!isAddWaterPopOpen)} className="w-6 h-6 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center transition-colors"><Icon name="plus" size={12}/></button>
-                                        <button onClick={()=>updateData({waterHistory:{...data.waterHistory,[todayStr]:0}})} className="w-6 h-6 bg-slate-50 text-slate-400 rounded flex items-center justify-center"><Icon name="rotate-ccw" size={12}/></button>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-bold text-slate-700 text-sm">☀️ 점심 식후</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="fetchMeal()" class="w-10 h-10 bg-white border-2 border-sky-100 rounded-xl shadow-sm flex items-center justify-center text-lg">🍴</button>
+                                        <input type="number" id="lunch_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0">
                                     </div>
                                 </div>
-                            </section>
-
-                            <section className="glass-card h-[125px] overflow-hidden relative">
-                                <header className="widget-header" style={{ height: '22px' }}>
-                                    <div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div>
-                                    <div className="flex items-center gap-1.5 mr-1">
-                                        <button onClick={()=>addNewItem('personalRoutines')} className="text-slate-300 hover:text-indigo-600 transition-colors"><Icon name="plus" size={13}/></button>
-                                        <button onClick={()=>setConfirmClear('personalRoutines')} className="text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12}/></button>
-                                    </div>
-                                </header>
-                                {confirmClear === 'personalRoutines' && <CardConfirmOverlay onConfirm={()=>{updateData({personalRoutines:[]}); setConfirmClear(null);}} onCancel={()=>setConfirmClear(null)} />}
-                                <div className="flex-grow overflow-y-auto hide-scrollbar px-1 pt-[2px] pb-1">
-                                    <div className="pillar-container">
-                                        <div className="pillar">
-                                            {(data.personalRoutines || []).filter((_,i)=>i%2===0).map(r => (<RoutineItem key={r.id} value={r.text} completed={r.completed} color={r.color} onChange={(u)=>updateData({personalRoutines: data.personalRoutines.map(it=>it.id===r.id?{...it,...u}:it)})} onDelete={()=>updateData({personalRoutines: data.personalRoutines.filter(it=>it.id!==r.id)})} />))}
-                                        </div>
-                                        <div className="pillar">
-                                            {(data.personalRoutines || []).filter((_,i)=>i%2!==0).map(r => (<RoutineItem key={r.id} value={r.text} completed={r.completed} color={r.color} onChange={(u)=>updateData({personalRoutines: data.personalRoutines.map(it=>it.id===r.id?{...it,...u}:it)})} onDelete={()=>updateData({personalRoutines: data.personalRoutines.filter(it=>it.id!==r.id)})} />))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section className="glass-card h-[125px] overflow-hidden">
-                                <header className="widget-header" style={{ height: '22px' }}><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div></header>
-                                <div className="flex-grow overflow-y-auto hide-scrollbar px-2 pt-[2px] pb-1">
-                                    <div className="pillar-container">
-                                        <div className="pillar">{(mealData || []).filter((_,i)=>i%2===0).map((m,i)=>(<div key={i} className="text-[12px] font-black text-slate-700 truncate leading-[1.52]">• {m}</div>))}</div>
-                                        <div className="pillar">{(mealData || []).filter((_,i)=>i%2!==0).map((m,i)=>(<div key={i} className="text-[12px] font-black text-slate-700 truncate leading-[1.52]">• {m}</div>))}</div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section className="glass-card h-[125px] overflow-hidden relative">
-                                <header className="widget-header" style={{ height: '22px' }}>
-                                    <div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div>
-                                    <div className="flex items-center gap-1.5 mr-1">
-                                        <button onClick={()=>addNewItem('routines')} className="text-slate-300 hover:text-emerald-600 transition-colors"><Icon name="plus" size={13}/></button>
-                                        <button onClick={()=>setConfirmClear('routines')} className="text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12}/></button>
-                                    </div>
-                                </header>
-                                {confirmClear === 'routines' && <CardConfirmOverlay onConfirm={()=>{updateData({routines:[]}); setConfirmClear(null);}} onCancel={()=>setConfirmClear(null)} />}
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 pt-[2px] pb-1">
-                                    {(data.routines || []).map(r => (<ChecklistItem key={r.id} value={r.text} completed={r.completed} color={r.color} onChange={(u)=>updateData({routines: data.routines.map(it=>it.id===r.id?{...it,...u}:it)})} onDelete={()=>updateData({routines: data.routines.filter(it=>it.id!==r.id)})} />))}
-                                </div>
-                            </section>
+                                <textarea id="lunch_memo" class="memo-area h-32" placeholder="점심 식단"></textarea>
+                            </div>
+                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-3"><span class="font-bold text-slate-700 text-sm">🌙 저녁 식후</span><input type="number" id="dinner_sugar" class="sugar-input" oninput="validateInputColor(this, 180)" placeholder="0"></div>
+                                <textarea id="dinner_memo" class="memo-area h-32" placeholder="저녁 식단"></textarea>
+                            </div>
                         </div>
-
-                        <div className="widget-grid-row">
-                            <section className="glass-card h-[135px] overflow-visible transition-all z-10">
-                                <header className="widget-header" style={{ height: '22px' }}>
-                                    <div className="flex items-center gap-1.5"><Icon name="link" className="text-indigo-500" size={12} /><h2 className="font-black text-[14px]">링크</h2></div>
-                                    <button onClick={()=>setIsLinkAddOpen(!isLinkAddOpen)} className="text-slate-300 hover:text-indigo-600 transition-colors mr-1"><Icon name="plus" size={13}/></button>
-                                </header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-2 pt-[2px] pb-1">
-                                    {(data.links || []).map(link => (
-                                        <div key={link.id} className="link-item-row group">
-                                            <button onClick={()=>window.open(link.url,'_blank')} className="link-text-btn truncate font-black text-[10px]">{link.text}</button>
-                                            <button onClick={()=>updateData({links: data.links.filter(l=>l.id!==link.id)})} className="text-slate-200 hover:text-red-500 ml-auto opacity-0 group-hover/item:opacity-100 transition-opacity"><Icon name="x" size={8}/></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                            
-                            <section className="glass-card h-[135px] overflow-hidden relative transition-all z-10">
-                                <header className="widget-header" style={{ height: '22px' }}><div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div></header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar" style={{ height: '110px' }}>
-                                    <table className="eval-table">
-                                        <thead><tr><th style={{ width: '20px' }}>V</th><th style={{ width: '35px' }}>과목</th><th style={{ width: '25px' }}>단원</th><th>평가 요소</th><th style={{ width: '18px' }}>1</th><th style={{ width: '18px' }}>2</th><th style={{ width: '18px' }}>3</th><th style={{ width: '18px' }}>4</th></tr></thead>
-                                        <tbody>
-                                            {prioritizedEvalData.map((row, idx) => {
-                                                const isF = (data.completedEvalRows || []).includes(row.sheetRow);
-                                                return (
-                                                    <tr key={`${row.sheetRow}-${idx}`} className={isF ? 'opacity-50' : ''}>
-                                                        <td className="cursor-pointer" onClick={() => toggleEvalDone(row.sheetRow)}><Icon name={isF ? "check-circle-2" : "circle"} className={isF ? "text-green-500" : "text-slate-300"} size={14} /></td>
-                                                        <td className={`font-black ${isF ? '' : getSubjectColor(row.subject)}`}>{row.subject}</td>
-                                                        <td className="truncate text-[10px]">{row.unit}</td>
-                                                        <FactorCell factor={row.factor} isFinished={isF} />
-                                                        {['n1', 'n2', 'n3', 'n4'].map(col => (<td key={col} className="cursor-pointer hover:bg-slate-50 font-black text-[10px]" onClick={() => cycleEvalResult(row, col)}>{row[col]}</td>))}
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
-
-                            <section className="glass-card h-[135px] overflow-y-auto hide-scrollbar">
-                                <header className="widget-header" style={{ height: '22px' }}><div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div></header>
-                                <table className="budget-table">
-                                    <thead><tr><th>예산명</th><th>잔액</th></tr></thead>
-                                    <tbody>{(budgetData.budgets || []).map((b,i) => (<tr key={i}><td>{b.name}</td><td className="text-blue-600 font-black">{b.balance.toLocaleString()}</td></tr>))}</tbody>
-                                </table>
-                            </section>
-
-                            <section className="glass-card h-[135px] relative">
-                                <header className="widget-header" style={{ height: '22px' }}>
-                                    <div className="flex items-center gap-1.5"><Icon name="sticky-note" className="text-amber-600" size={12} /><h2 className="font-black text-[14px]">업무 메모</h2></div>
-                                    <button onClick={()=>setConfirmClear('generalMemo')} className="text-slate-300 hover:text-red-500 mr-1 transition-colors"><Icon name="trash-2" size={12}/></button>
-                                </header>
-                                {confirmClear === 'generalMemo' && <CardConfirmOverlay onConfirm={()=>{updateData({generalMemo:''}); setConfirmClear(null);}} onCancel={()=>setConfirmClear(null)} />}
-                                <textarea className="w-full flex-grow bg-transparent pt-[2px] pb-[4px] px-2 text-[12px] font-black outline-none resize-none" value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} spellCheck={false} />
-                            </section>
-                        </div>
+                        <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-200 pb-3"><label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">📝 기타 메모</label><textarea id="extra_memo" class="memo-area h-[60px]" placeholder="특이사항 기록"></textarea></div>
                     </div>
                 </div>
-            );
+            </section>
+
+            <section id="view-chart" class="view-section hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
+                    <div id="chart-legend-container" class="flex gap-3 text-[11px] font-bold text-slate-500 mb-4"></div>
+                    <div class="w-full h-[400px] relative"><canvas id="mainChart"></canvas></div>
+                </div>
+            </section>
+
+            <section id="view-analysis" class="view-section hidden max-w-4xl mx-auto flex flex-col h-[70vh]">
+                <div class="flex-grow bg-slate-50 rounded-3xl p-4 overflow-y-auto flex flex-col gap-2 mb-4 border border-slate-200 shadow-inner" id="chat-container"></div>
+                <!-- 질문 입력칸 UI 수정: 버튼을 밖으로 빼고 높이 일치화 -->
+                <div class="flex items-stretch gap-2">
+                    <textarea id="ai-input" class="flex-grow border-2 border-slate-200 rounded-2xl p-3 focus:border-sky-400 outline-none resize-none h-[56px] shadow-sm text-sm" placeholder="기록에 대해 물어보세요..." spellcheck="false"></textarea>
+                    <button onclick="askAI()" id="send-ai-btn" class="w-14 h-[56px] bg-sky-500 text-white rounded-2xl shadow-lg flex items-center justify-center font-bold hover:bg-sky-600 active:scale-95 transition-all">↑</button>
+                </div>
+            </section>
+        </main>
+
+        <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white/95 border border-slate-200 flex justify-around py-2 rounded-[2.5rem] shadow-2xl z-50">
+            <button onclick="switchView('calendar')" id="nav-calendar" class="flex flex-col items-center gap-0.5 tab-active flex-1"><span class="text-xl">📅</span><span class="text-[10px] font-bold">달력</span></button>
+            <button onclick="switchView('chart')" id="nav-chart" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-xl">📈</span><span class="text-[10px] font-bold">차트</span></button>
+            <button onclick="switchView('analysis')" id="nav-analysis" class="flex flex-col items-center gap-0.5 tab-inactive flex-1"><span class="text-xl">💡</span><span class="text-[10px] font-bold">분석</span></button>
+        </nav>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1WEEFWOaGYo792Q0IkqtfOHZxJ74i205zGpEq534lIvXbfOzyfzztrnmPwyEIkaI7/exec"; 
+        let currentMonth = new Date(), records = {}, selectedDateStr = null, isSyncing = false, chartInstance = null, activeView = 'calendar', schoolInfo = null;
+
+        Chart.register(ChartDataLabels);
+
+        window.onload = () => { 
+            const local = localStorage.getItem('health_records_v6');
+            if(local) { records = JSON.parse(local); renderCalendar(); }
+            if (isValidUrl()) setTimeout(syncWithCloud, 500);
+        };
+
+        function isValidUrl() { return SCRIPT_URL && SCRIPT_URL.includes("macros/s/"); }
+
+        function updateStatus(type, msg) {
+            const bar = document.getElementById('status-indicator');
+            if (!bar) return;
+            bar.style.display = "flex";
+            bar.className = `status-${type}`;
+            bar.innerHTML = (type === 'syncing' ? '<span class="loader"></span>' : (type === 'ok' ? '✅' : '⚠️')) + ` <span>${msg}</span>`;
+            if (type === 'ok') setTimeout(() => bar.style.display = "none", 2000);
         }
-        const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />);
+
+        async function syncWithCloud() {
+            if (isSyncing) return; 
+            isSyncing = true; 
+            updateStatus('syncing', '데이터 로딩...');
+            try { 
+                const res = await fetch(SCRIPT_URL + "?t=" + Date.now(), { cache: 'no-store' }); 
+                const data = await res.json(); 
+                if (data && data.records) { 
+                    records = data.records; 
+                    schoolInfo = data.schoolInfo; 
+                    localStorage.setItem('health_records_v6', JSON.stringify(records)); 
+                    renderCalendar(); 
+                    updateStatus('ok', '연동 성공'); 
+                }
+            } catch (e) { updateStatus('error', '연동 실패'); } finally { isSyncing = false; }
+        }
+
+        async function askAI() {
+            const input = document.getElementById('ai-input');
+            const question = input.value.trim();
+            if (!question) return;
+            const container = document.getElementById('chat-container');
+            container.innerHTML += `<div class="chat-bubble chat-user">${question}</div>`;
+            input.value = ''; container.scrollTop = container.scrollHeight;
+            const loadingId = "L" + Date.now();
+            container.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai italic opacity-50 text-xs">유동적 모델 탐색 및 분석 중...</div>`;
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "ask_ai", question: question }), cache: 'no-store' });
+                const result = await res.json();
+                const loader = document.getElementById(loadingId);
+                if(loader) loader.remove();
+                if (result.result === "success") container.innerHTML += `<div class="chat-bubble chat-ai">${result.answer}</div>`;
+                else container.innerHTML += `<div class="chat-bubble chat-error"><b>분석 실패 로그:</b><br>${result.message.replace(/\n/g, '<br>')}</div>`;
+            } catch (e) { document.getElementById(loadingId).innerHTML = `<div class="text-rose-600">네트워크 오류: ${e.message}</div>`; } finally { container.scrollTop = container.scrollHeight; }
+        }
+
+        async function fetchMeal() {
+            if (!selectedDateStr || !schoolInfo) return;
+            updateStatus('syncing', '급식 조회...');
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ type: "get_meal", date: selectedDateStr, school: schoolInfo }) });
+                const result = await res.json();
+                if (result.result === "success") { document.getElementById('lunch_memo').value = result.menu; updateStatus('ok', '급식 로드됨'); }
+            } catch (e) { updateStatus('error', '조회 실패'); }
+        }
+
+        async function handleSave() {
+            if (!selectedDateStr) return;
+            const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
+            const record = { date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'), lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'), dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'), extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), step_count: getValue('step_count'), is_success: getValue('is_success') };
+            records[selectedDateStr] = record; localStorage.setItem('health_records_v6', JSON.stringify(records)); renderCalendar();
+            try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); updateStatus('ok', '저장됨'); } catch (e) { updateStatus('error', '실패'); }
+        }
+
+        async function handleCloseInput() { await handleSave(); switchView('calendar'); }
+        function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); if(activeView === 'chart') setTimeout(updateChart, 50); }
+        
+        function renderCalendar() {
+            const body = document.getElementById('calendar-body'); if(!body) return;
+            body.innerHTML = '<div class="calendar-grid text-center bg-slate-50 border-b border-slate-100 font-bold text-[11px] py-3 text-slate-500 uppercase tracking-widest"><div class="text-rose-500">Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div class="text-sky-500">Sat</div></div><div id="days-area" class="calendar-grid"></div>';
+            const daysArea = document.getElementById('days-area'), yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
+            document.getElementById('view-title').innerText = `${yr}년 ${mo + 1}월`;
+            const now = new Date(), todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const first = new Date(yr, mo, 1).getDay(), last = new Date(yr, mo + 1, 0).getDate();
+            for (let i = 0; i < first; i++) daysArea.appendChild(Object.assign(document.createElement('div'), {className:'day-cell bg-slate-50/40'}));
+            for (let d = 1; d <= last; d++) {
+                const dateKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const r = records[dateKey], dObj = new Date(dateKey.replace(/-/g, '/')), isToday = dateKey === todayStr;
+                const cell = Object.assign(document.createElement('div'), { className: `day-cell flex flex-col ${isToday ? 'today-border' : ''}` });
+                let color = (dObj.getDay() === 0) ? "text-rose-500" : (dObj.getDay() === 6 ? "text-sky-500" : "text-slate-800");
+                let isSuccess = r && (r.is_success === true || String(r.is_success).toUpperCase() === "TRUE");
+                cell.innerHTML = `<div class="flex justify-between items-center w-full mb-1 mobile-date-header"><div class="w-5 h-5 flex items-center justify-center ${isSuccess ? 'bg-sky-200 rounded-full' : ''}"><span class="text-[12px] md:text-[14px] font-black ${color}">${d}</span></div>${(r && r.step_count) ? `<span class="text-[9px] text-slate-400 font-bold">${r.step_count}</span>` : ''}</div><div class="flex-grow flex flex-col gap-0 text-[11px] font-bold overflow-hidden">` + (r ? (r.morning_sugar ? `<div class="truncate">🌥️<span class="${r.morning_sugar <= 100 ? 'text-sky-500' : 'text-rose-500'}">${r.morning_sugar}</span></div>` : '') + (r.lunch_sugar ? `<div class="truncate">☀️<span class="${r.lunch_sugar <= 180 ? 'text-sky-500' : 'text-rose-500'}">${r.lunch_sugar}</span></div>` : '') + (r.dinner_sugar ? `<div class="truncate">🌙<span class="${r.dinner_sugar <= 180 ? 'text-sky-500' : 'text-rose-500'}">${r.dinner_sugar}</span></div>` : '') : '') + `</div>` + (r && r.body_weight ? `<div class="mt-auto border-t border-slate-100 pt-0.5 text-[11px] text-slate-400 font-bold truncate">⚖️${r.body_weight}</div>` : `<div class="mt-auto h-4"></div>`);
+                cell.onclick = () => { selectedDateStr = dateKey; const rec = records[dateKey]||{}; document.getElementById('input-date-title').innerText = dateKey; ['morning_sugar','morning_memo','lunch_sugar','lunch_memo','dinner_sugar','dinner_memo','extra_memo','body_weight','step_count'].forEach(id => { const el = document.getElementById(id); if(el) { el.value = rec[id] || ''; if(id.includes('sugar')) validateInputColor(el, id === 'morning_sugar' ? 100 : 180); } }); const sEl = document.getElementById('is_success'); if(sEl) sEl.checked = (rec.is_success === true || String(rec.is_success).toUpperCase() === "TRUE"); switchView('input'); };
+                daysArea.appendChild(cell);
+            }
+        }
+
+        function switchView(n) { 
+            activeView = n; 
+            document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden')); 
+            const target = document.getElementById(`view-${n}`); 
+            if (target) target.classList.remove('hidden'); 
+            
+            // 헤더 제어: 분석창(analysis)과 입력창(input)에서는 헤더를 숨김
+            const h = document.getElementById('main-header'); 
+            if(h) h.style.display = (n === 'input' || n === 'analysis') ? 'none' : 'block'; 
+            
+            document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.replace('tab-active', 'tab-inactive')); 
+            const activeNav = document.getElementById(`nav-${n}`); 
+            if (activeNav) activeNav.classList.replace('tab-inactive', 'tab-active'); 
+            
+            if(n==='calendar') renderCalendar(); 
+            else if(n==='chart') setTimeout(updateChart, 50); 
+            window.scrollTo(0,0); 
+        }
+
+        function validateInputColor(el, t) { if(!el) return; el.style.color = !el.value ? '' : (parseFloat(el.value) <= t ? '#0ea5e9' : '#f43f5e'); }
+        function closeModal() { document.getElementById('overlay').style.display = 'none'; }
+        
+        function updateChart() {
+            const canvas = document.getElementById('mainChart'); if(!canvas) return;
+            const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
+            const labels = Array.from({length:lastDay}, (_,i)=>i+1);
+            const getVal = (day, key) => { const dk = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; return parseFloat(records[dk]?.[key]) || null; };
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(canvas.getContext('2d'), { 
+                type: 'line', 
+                data: { 
+                    labels, 
+                    datasets: [ 
+                        { label: '아침', data: labels.map(d => getVal(d, 'morning_sugar')), borderColor: '#7dd3fc', tension: 0.4, spanGaps: true, datalabels: { display: false } }, 
+                        { label: '점심', data: labels.map(d => getVal(d, 'lunch_sugar')), borderColor: '#fb923c', tension: 0.4, spanGaps: true, datalabels: { display: false } }, 
+                        { label: '저녁', data: labels.map(d => getVal(d, 'dinner_sugar')), borderColor: '#1e3a8a', tension: 0.4, spanGaps: true, datalabels: { display: false } } 
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        // 혈당 차트에서는 숫자 라벨을 표시하지 않음
+                        datalabels: { display: false }
+                    } 
+                } 
+            });
+        }
     </script>
 </body>
 </html>

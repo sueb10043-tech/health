@@ -44,22 +44,21 @@
 
         .loader-sm { border: 2px solid #e0f2fe; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; display: none; align-items: center; gap: 4px; transition: all 0.3s; white-space: nowrap; }
-        #status-badge.syncing { background-color: #e0f2fe; color: #0369a1; display: flex; }
-        #status-badge.ok { background-color: #f0fdf4; color: #15803d; display: flex; }
-        #status-badge.error { background-color: #fee2e2; color: #b91c1c; display: flex; }
+        #status-badge { width: 8px; height: 8px; border-radius: 50%; display: none; flex-shrink: 0; }
+        #status-badge.syncing { background-color: #38bdf8; display: block; animation: blink 1s infinite; }
+        #status-badge.ok { background-color: #4ade80; display: block; }
+        #status-badge.error { background-color: #f87171; display: block; }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     </style>
 </head>
 <body>
     <div id="app-container" class="main-wrapper">
         <header id="main-header" class="bg-white sticky top-0 z-20 border-b border-slate-100 shadow-sm h-[64px]">
-            <div class="relative flex items-center justify-center h-full max-w-4xl mx-auto w-full px-4">
-                <div class="flex items-center gap-6">
-                    <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〈</button>
-                    <h1 id="view-title" class="font-bold text-lg text-slate-800 text-center min-w-[140px]">연도 월</h1>
-                    <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〉</button>
-                </div>
-                <div id="status-badge" class="absolute right-4"></div>
+            <div class="relative flex items-center h-full max-w-4xl mx-auto w-full px-4">
+                <button onclick="changeMonth(-1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition">〈</button>
+                <h1 id="view-title" class="absolute left-1/2 -translate-x-1/2 font-bold text-lg text-slate-800 text-center whitespace-nowrap">연도 월</h1>
+                <button onclick="changeMonth(1)" class="p-2 text-slate-400 font-bold hover:bg-slate-50 rounded-full transition ml-auto">〉</button>
+                <div id="status-badge" class="ml-3"></div>
             </div>
         </header>
 
@@ -160,12 +159,12 @@
 
         let saveTimer = null;
 
-        function updateStatus(type, msg) {
+        function updateStatus(type) {
             const badge = document.getElementById('status-badge');
             if (!badge) return;
             badge.className = type;
-            badge.innerHTML = (type === 'syncing' ? '<span class="loader-sm"></span>' : (type === 'ok' ? '✓' : '!')) + ` ${msg}`;
-            if (type === 'ok' || type === 'error') setTimeout(() => { badge.className = ''; badge.style.display = 'none'; }, 2500);
+            badge.innerHTML = '';
+            if (type === 'ok' || type === 'error') setTimeout(() => { badge.className = ''; badge.style.display = 'none'; }, 2000);
         }
 
         function scheduleAutoSave() {
@@ -177,14 +176,14 @@
                 records[selectedDateStr] = record;
                 localStorage.setItem('health_records_v6', JSON.stringify(records));
                 renderCalendar();
-                try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); updateStatus('ok', '저장됨'); } catch (e) { updateStatus('error', '저장 실패'); }
+                try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); updateStatus('ok'); } catch (e) { updateStatus('error'); }
             }, 300);
         }
 
         async function syncWithCloud() {
             if (isSyncing) return; 
             isSyncing = true; 
-            updateStatus('syncing', '데이터 로딩...');
+            updateStatus('syncing');
             try { 
                 const res = await fetch(SCRIPT_URL + "?t=" + Date.now(), { cache: 'no-store' }); 
                 const data = await res.json(); 
@@ -193,9 +192,9 @@
                     schoolInfo = data.schoolInfo; 
                     localStorage.setItem('health_records_v6', JSON.stringify(records)); 
                     renderCalendar(); 
-                    updateStatus('ok', '연동 성공'); 
+                    updateStatus('ok'); 
                 }
-            } catch (e) { updateStatus('error', '연동 실패'); } finally { isSyncing = false; }
+            } catch (e) { updateStatus('error'); } finally { isSyncing = false; }
         }
 
         async function askAI() {
@@ -235,13 +234,22 @@
             const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
             const record = { date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'), lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'), dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'), extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), step_count: getValue('step_count'), is_success: getValue('is_success') };
             records[selectedDateStr] = record; localStorage.setItem('health_records_v6', JSON.stringify(records)); renderCalendar();
-            try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); updateStatus('ok', '저장됨'); } catch (e) { updateStatus('error', '실패'); }
+            try { await fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) }); updateStatus('ok'); } catch (e) { updateStatus('error'); }
         }
 
-        async function handleCloseInput() { 
+        function handleCloseInput() { 
             clearTimeout(saveTimer);
-            await handleSave();
-            switchView('calendar'); 
+            if (!selectedDateStr) { switchView('calendar'); return; }
+            // 로컬에 즉시 저장
+            const getValue = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; };
+            const record = { date: selectedDateStr, morning_sugar: getValue('morning_sugar'), morning_memo: getValue('morning_memo'), lunch_sugar: getValue('lunch_sugar'), lunch_memo: getValue('lunch_memo'), dinner_sugar: getValue('dinner_sugar'), dinner_memo: getValue('dinner_memo'), extra_memo: getValue('extra_memo'), body_weight: getValue('body_weight'), step_count: getValue('step_count'), is_success: getValue('is_success') };
+            records[selectedDateStr] = record;
+            localStorage.setItem('health_records_v6', JSON.stringify(records));
+            // 화면은 즉시 전환
+            switchView('calendar');
+            // 서버 저장은 백그라운드로
+            fetch(SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) })
+                .then(() => updateStatus('ok')).catch(() => updateStatus('error'));
         }
         function changeMonth(s) { currentMonth.setMonth(currentMonth.getMonth() + s); renderCalendar(); if(activeView === 'chart') setTimeout(updateChart, 50); }
         
